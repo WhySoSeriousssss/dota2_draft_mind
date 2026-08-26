@@ -9,4 +9,7 @@ export const state = {
   search: "",
   requestSequence: 0,
   debounceTimer: null,
+  recommendationResults: null,
+  resultPage: 1,
+  resultsPerPage: 15,
 };

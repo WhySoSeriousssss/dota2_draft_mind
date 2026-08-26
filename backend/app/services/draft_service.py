@@ -33,7 +33,7 @@ class DraftService:
             defaults=ConfigDefaults(
                 rank=default_rank,
                 weights=DraftWeights(),
-                top_k=10,
+                top_k=15,
             ),
             dataset_version=self.repository.dataset_version,
         )

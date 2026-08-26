@@ -85,7 +85,13 @@
           <h2>推荐英雄</h2>
           <div class="results-meta" id="resultsMeta">等待基础数据</div>
         </div>
-        <button class="calculate-button" id="calculateButton" type="button">计算推荐</button>
+        <div class="results-actions">
+          <label class="recommend-count" for="recommendCount">
+            <span>推荐数</span>
+            <input id="recommendCount" type="number" min="1" max="127" step="1" value="15" inputmode="numeric">
+          </label>
+          <button class="calculate-button" id="calculateButton" type="button">计算推荐</button>
+        </div>
       </div>
       <div class="message-bar" id="messageBar" role="alert"></div>
       <div id="resultsContainer">

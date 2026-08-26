@@ -93,7 +93,7 @@
     .workspace {
       min-height: calc(100vh - 64px);
       display: grid;
-      grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
+      grid-template-columns: minmax(500px, 560px) minmax(0, 1fr);
     }
 
     .mobile-tabs {
@@ -354,7 +354,7 @@
     .hero-pool {
       height: 330px;
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       grid-auto-rows: 64px;
       align-content: start;
       gap: 6px;
@@ -424,6 +424,31 @@
       margin-top: 4px;
       color: var(--muted);
       font-size: 12px;
+    }
+
+    .results-actions {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .recommend-count {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .recommend-count input {
+      width: 72px;
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 0 8px;
+      font-variant-numeric: tabular-nums;
     }
 
     .calculate-button {
@@ -508,6 +533,41 @@
 
     .results-table tbody tr:hover {
       background: #1c2226;
+    }
+
+    .pagination {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .pagination span {
+      min-width: 48px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pagination button {
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      border-color: var(--gold);
+    }
+
+    .pagination button:disabled {
+      cursor: default;
+      opacity: 0.38;
     }
 
     .rank-number {
@@ -681,10 +741,16 @@
       }
 
       .results-heading {
-        align-items: flex-end;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .results-actions {
+        width: 100%;
       }
 
       .calculate-button {
+        flex: 1;
         padding: 0 12px;
       }
     }

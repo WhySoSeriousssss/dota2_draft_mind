@@ -39,7 +39,7 @@ class DraftRecommendationRequest(StrictModel):
     enemies: list[int] = Field(default_factory=list, max_length=5)
     excluded_hero_ids: list[int] = Field(default_factory=list, max_length=127)
     weights: DraftWeights = Field(default_factory=DraftWeights)
-    top_k: int = Field(default=10, ge=1, le=20)
+    top_k: int = Field(default=15, ge=1, le=127)
 
 
 class RecommendationResult(StrictModel):

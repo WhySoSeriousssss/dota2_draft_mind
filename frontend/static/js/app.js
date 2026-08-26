@@ -17,6 +17,7 @@ import { state } from "./state.js";
       heroPool: document.getElementById("heroPool"),
       attrFilter: document.getElementById("attrFilter"),
       calculateButton: document.getElementById("calculateButton"),
+      recommendCount: document.getElementById("recommendCount"),
       resultsContainer: document.getElementById("resultsContainer"),
       resultsMeta: document.getElementById("resultsMeta"),
       messageBar: document.getElementById("messageBar"),
@@ -180,7 +181,13 @@ import { state } from "./state.js";
       return "";
     }
 
-    function renderResults(payload) {
+    function renderResults(payload, page = 1) {
+      state.recommendationResults = payload;
+      const totalResults = payload.results.length;
+      const totalPages = Math.max(1, Math.ceil(totalResults / state.resultsPerPage));
+      state.resultPage = Math.min(Math.max(page, 1), totalPages);
+      const pageStart = (state.resultPage - 1) * state.resultsPerPage;
+      const pageResults = payload.results.slice(pageStart, pageStart + state.resultsPerPage);
       const tableWrap = document.createElement("div");
       const table = document.createElement("table");
       const thead = document.createElement("thead");
@@ -199,7 +206,7 @@ import { state } from "./state.js";
           <th style="width:54px"></th>
         </tr>`;
 
-      payload.results.forEach((result, index) => {
+      pageResults.forEach((result, index) => {
         const hero = state.heroById.get(result.hero_id);
         const row = document.createElement("tr");
         const rankCell = document.createElement("td");
@@ -216,7 +223,7 @@ import { state } from "./state.js";
         const actionCell = document.createElement("td");
         const addButton = document.createElement("button");
         rankCell.className = "rank-number";
-        rankCell.textContent = String(index + 1).padStart(2, "0");
+        rankCell.textContent = String(pageStart + index + 1).padStart(2, "0");
         heroWrap.className = "result-hero";
         nameWrap.className = "result-name";
         name.textContent = result.hero_name;
@@ -247,8 +254,30 @@ import { state } from "./state.js";
 
       table.append(thead, tbody);
       tableWrap.append(table);
-      elements.resultsContainer.replaceChildren(tableWrap);
-      elements.resultsMeta.textContent = `${payload.rank} · 我方 ${state.allies.length} · 敌方 ${state.enemies.length} · Top ${payload.results.length}`;
+      const pagination = createPagination(totalPages);
+      elements.resultsContainer.replaceChildren(tableWrap, pagination);
+      elements.resultsMeta.textContent = `${payload.rank} · 我方 ${state.allies.length} · 敌方 ${state.enemies.length} · Top ${totalResults}`;
+    }
+
+    function createPagination(totalPages) {
+      const pagination = document.createElement("nav");
+      const pageStatus = document.createElement("span");
+      const previous = document.createElement("button");
+      const next = document.createElement("button");
+      pagination.className = "pagination";
+      pagination.setAttribute("aria-label", "推荐结果分页");
+      pageStatus.textContent = `${state.resultPage} / ${totalPages}`;
+      previous.type = "button";
+      previous.textContent = "上一页";
+      previous.disabled = state.resultPage <= 1;
+      previous.addEventListener("click", () => renderResults(state.recommendationResults, state.resultPage - 1));
+      next.type = "button";
+      next.textContent = "下一页";
+      next.disabled = state.resultPage >= totalPages;
+      next.addEventListener("click", () => renderResults(state.recommendationResults, state.resultPage + 1));
+      pagination.append(previous, pageStatus, next);
+      pagination.hidden = totalPages <= 1;
+      return pagination;
     }
 
     async function calculateRecommendations() {
@@ -270,7 +299,7 @@ import { state } from "./state.js";
             beta: Number(elements.beta.value),
             gamma: Number(elements.gamma.value),
           },
-          top_k: 10,
+          top_k: Number(elements.recommendCount.value),
         });
         if (requestSequence !== state.requestSequence) return;
 
@@ -320,6 +349,11 @@ import { state } from "./state.js";
         });
       });
       elements.rank.addEventListener("change", scheduleRecommendation);
+      elements.recommendCount.addEventListener("change", () => {
+        const count = Math.min(127, Math.max(1, Number.parseInt(elements.recommendCount.value, 10) || 15));
+        elements.recommendCount.value = String(count);
+        scheduleRecommendation();
+      });
       elements.calculateButton.addEventListener("click", calculateRecommendations);
     }
 
@@ -342,6 +376,7 @@ import { state } from "./state.js";
         elements.alpha.value = config.defaults.weights.alpha;
         elements.beta.value = config.defaults.weights.beta;
         elements.gamma.value = config.defaults.weights.gamma;
+        elements.recommendCount.value = config.defaults.top_k;
         elements.dataStatus.textContent = `${config.heroes.length} 位英雄 · ${config.rank_segments.length} 个分段`;
         updateWeightLabels();
         renderTeams();

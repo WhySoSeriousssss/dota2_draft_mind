@@ -22,6 +22,15 @@ def test_config_returns_all_heroes_and_rank_segments():
         "Divine",
         "Immortal",
     ]
+    assert config.defaults.top_k == 15
+
+
+def test_recommendation_defaults_to_fifteen_results():
+    request = DraftRecommendationRequest(rank="Legend")
+    response = create_service().recommend(request)
+
+    assert request.top_k == 15
+    assert len(response.results) == 15
 
 
 def test_recommendation_preserves_existing_result():
