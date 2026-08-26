@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, Request
+from typing import Literal
+
+from fastapi import APIRouter, Depends, Query, Request
 
 from ..schemas import (
     AppConfigResponse,
     DraftRecommendationRequest,
     DraftRecommendationResponse,
     HealthResponse,
+    LeaderboardResponse,
 )
 from ..services.draft_service import DraftService
 
@@ -27,6 +30,18 @@ async def recommend(
     service: DraftService = Depends(get_draft_service),
 ):
     return service.recommend(payload)
+
+
+@router.get("/leaderboard", response_model=LeaderboardResponse)
+async def get_leaderboard(
+    rank: str = Query(default="All", min_length=1, max_length=32),
+    sort_by: Literal[
+        "name", "pick_rate", "win_rate", "appearances"
+    ] = "win_rate",
+    order: Literal["asc", "desc"] = "desc",
+    service: DraftService = Depends(get_draft_service),
+):
+    return service.get_leaderboard(rank, sort_by, order)
 
 
 @router.get("/healthz", response_model=HealthResponse)

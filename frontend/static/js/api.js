@@ -26,3 +26,13 @@ export function fetchRecommendations(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+
+export function fetchLeaderboard(rank, sortBy = "win_rate", order = "desc") {
+  const query = new URLSearchParams({
+    rank,
+    sort_by: sortBy,
+    order,
+  });
+  return request(`/leaderboard?${query.toString()}`);
+}

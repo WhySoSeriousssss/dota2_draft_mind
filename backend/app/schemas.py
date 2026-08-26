@@ -63,6 +63,33 @@ class DraftRecommendationResponse(StrictModel):
     dataset_version: str | None = None
 
 
+class LeaderboardMatchup(StrictModel):
+    hero_id: int
+    hero_name: str
+    image: str
+    appearances: int
+    win_rate: float
+    advantage: float
+
+
+class LeaderboardHero(StrictModel):
+    hero_id: int
+    hero_name: str
+    image: str
+    appearances: int
+    pick_rate: float
+    win_rate: float | None
+    counters: list[LeaderboardMatchup]
+    countered_by: list[LeaderboardMatchup]
+
+
+class LeaderboardResponse(StrictModel):
+    rank: str
+    total_matches: int
+    heroes: list[LeaderboardHero]
+    dataset_version: str | None = None
+
+
 class HealthResponse(StrictModel):
     status: str
     heroes: int

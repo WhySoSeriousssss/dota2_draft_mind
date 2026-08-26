@@ -35,6 +35,71 @@ class DraftRepository:
     def dataset_version(self):
         return self._metadata.get("generated_at")
 
+    def get_leaderboard_data(self, rank_segment):
+        normalized_rank = rank_segment.strip().lower()
+
+        if normalized_rank == "all":
+            selected_rank = "All"
+        else:
+            rank_lookup = {
+                rank.lower(): rank for rank in self.rank_segments
+            }
+
+            if normalized_rank not in rank_lookup:
+                available = ", ".join(["All", *self.rank_segments])
+                raise ValueError(
+                    f"未知分段：{rank_segment}；可选分段：{available}"
+                )
+
+            selected_rank = rank_lookup[normalized_rank]
+
+        connection = sqlite3.connect(self.database_path)
+
+        try:
+            if selected_rank == "All":
+                base_rows = connection.execute(
+                    """
+                    SELECT hero_id, SUM(appearances), SUM(wins)
+                    FROM base_stats
+                    GROUP BY hero_id
+                    """
+                ).fetchall()
+                matchup_rows = connection.execute(
+                    """
+                    SELECT hero_id, enemy_id,
+                           SUM(appearances), SUM(wins)
+                    FROM counter_matrix
+                    GROUP BY hero_id, enemy_id
+                    """
+                ).fetchall()
+            else:
+                base_rows = connection.execute(
+                    """
+                    SELECT hero_id, appearances, wins
+                    FROM base_stats
+                    WHERE rank_segment = ?
+                    """,
+                    (selected_rank,),
+                ).fetchall()
+                matchup_rows = connection.execute(
+                    """
+                    SELECT hero_id, enemy_id, appearances, wins
+                    FROM counter_matrix
+                    WHERE rank_segment = ?
+                    """,
+                    (selected_rank,),
+                ).fetchall()
+        finally:
+            connection.close()
+
+        total_hero_picks = sum(row[1] for row in base_rows)
+        return {
+            "rank": selected_rank,
+            "total_matches": total_hero_picks // 10,
+            "base_rows": base_rows,
+            "matchup_rows": matchup_rows,
+        }
+
     def _load_heroes(self):
         with self.heroes_path.open("r", encoding="utf-8") as file:
             raw_heroes = json.load(file)

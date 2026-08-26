@@ -91,9 +91,49 @@
     }
 
     .workspace {
-      min-height: calc(100vh - 64px);
+      min-height: calc(100vh - 109px);
       display: grid;
       grid-template-columns: minmax(500px, 560px) minmax(0, 1fr);
+    }
+
+    .page-tabs {
+      height: 45px;
+      display: flex;
+      align-items: stretch;
+      gap: 24px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: #14181a;
+    }
+
+    .page-tabs button {
+      position: relative;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 0 2px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .page-tabs button::after {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      background: transparent;
+      content: "";
+    }
+
+    .page-tabs button:hover,
+    .page-tabs button.active {
+      color: var(--text);
+    }
+
+    .page-tabs button.active::after {
+      background: var(--gold);
     }
 
     .mobile-tabs {
@@ -648,6 +688,228 @@
       font-size: 13px;
     }
 
+    .leaderboard-page {
+      min-height: calc(100vh - 109px);
+      padding: 24px;
+    }
+
+    .leaderboard-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 16px;
+    }
+
+    .leaderboard-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .leaderboard-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .leaderboard-filters {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .leaderboard-filters label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .leaderboard-filters select,
+    .leaderboard-filters input {
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 0 10px;
+    }
+
+    .leaderboard-filters select {
+      width: 130px;
+    }
+
+    .leaderboard-filters input {
+      width: 210px;
+    }
+
+    .leaderboard-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .leaderboard-table {
+      width: 100%;
+      min-width: 1050px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .leaderboard-table th {
+      height: 42px;
+      background: #151a1d;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 680;
+      text-align: left;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .leaderboard-table th:nth-child(1) {
+      width: 54px;
+    }
+
+    .leaderboard-table th:nth-child(2) {
+      width: 230px;
+    }
+
+    .leaderboard-table th:nth-child(3),
+    .leaderboard-table th:nth-child(4) {
+      width: 100px;
+      text-align: right;
+    }
+
+    .leaderboard-table th:nth-child(5),
+    .leaderboard-table th:nth-child(6) {
+      width: 280px;
+    }
+
+    .leaderboard-table th button {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      cursor: pointer;
+      text-align: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+    }
+
+    .leaderboard-table th button:hover {
+      color: var(--text);
+    }
+
+    .sort-indicator {
+      display: inline-block;
+      width: 12px;
+      color: var(--gold);
+    }
+
+    .leaderboard-table tbody tr {
+      height: 64px;
+    }
+
+    .leaderboard-table tbody tr:hover {
+      background: #1c2226;
+    }
+
+    .leaderboard-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .leaderboard-position {
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 760;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .leaderboard-hero {
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      align-items: center;
+      column-gap: 10px;
+    }
+
+    .leaderboard-hero-image {
+      width: 78px;
+      height: 44px;
+      grid-row: 1 / 3;
+      object-fit: cover;
+      border-radius: 3px;
+      background: var(--surface-3);
+    }
+
+    .leaderboard-hero strong,
+    .leaderboard-hero span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .leaderboard-hero strong {
+      align-self: end;
+      font-size: 13px;
+    }
+
+    .leaderboard-hero span {
+      align-self: start;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .leaderboard-rate {
+      text-align: right;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .leaderboard-rate.win-rate {
+      color: var(--gold);
+      font-weight: 760;
+    }
+
+    .matchup-strip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .matchup-strip.empty {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .matchup-image {
+      width: 46px;
+      height: 28px;
+      flex: 0 0 46px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      object-fit: cover;
+      background: var(--surface-3);
+    }
+
+    .leaderboard-empty {
+      height: 240px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
     @media (max-width: 980px) {
       .workspace {
         grid-template-columns: 1fr;
@@ -686,7 +948,18 @@
       }
 
       .workspace {
-        min-height: calc(100vh - 104px);
+        min-height: calc(100vh - 149px);
+      }
+
+      .page-tabs {
+        height: 45px;
+        gap: 20px;
+        overflow-x: auto;
+        padding: 0 16px;
+      }
+
+      .page-tabs button {
+        flex: 0 0 auto;
       }
 
       .mobile-tabs {
@@ -752,5 +1025,26 @@
       .calculate-button {
         flex: 1;
         padding: 0 12px;
+      }
+
+      .leaderboard-page {
+        min-height: calc(100vh - 105px);
+        padding: 16px;
+      }
+
+      .leaderboard-heading {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .leaderboard-filters {
+        display: grid;
+        grid-template-columns: minmax(110px, 0.7fr) minmax(0, 1.3fr);
+      }
+
+      .leaderboard-filters select,
+      .leaderboard-filters input {
+        width: 100%;
       }
     }

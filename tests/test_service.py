@@ -84,3 +84,36 @@ def test_invalid_draft_is_rejected():
         match="同一个英雄不能同时出现在双方阵容中",
     ):
         create_service().recommend(request)
+
+
+def test_all_rank_leaderboard_aggregates_every_match():
+    leaderboard = create_service().get_leaderboard(
+        "All",
+        "win_rate",
+        "desc",
+    )
+
+    assert leaderboard.total_matches == 3_729_537
+    assert len(leaderboard.heroes) == 127
+    assert sum(hero.pick_rate for hero in leaderboard.heroes) == pytest.approx(10)
+    win_rates = [
+        hero.win_rate for hero in leaderboard.heroes
+        if hero.win_rate is not None
+    ]
+    assert win_rates == sorted(win_rates, reverse=True)
+
+
+def test_leaderboard_includes_reliable_matchups():
+    leaderboard = create_service().get_leaderboard(
+        "Legend",
+        "pick_rate",
+        "desc",
+    )
+    hero = next(item for item in leaderboard.heroes if item.counters)
+
+    assert leaderboard.total_matches == 821_344
+    assert len(hero.counters) <= 5
+    assert len(hero.countered_by) <= 5
+    assert all(matchup.appearances >= 20 for matchup in hero.counters)
+    assert all(matchup.advantage > 0 for matchup in hero.counters)
+    assert all(matchup.advantage < 0 for matchup in hero.countered_by)

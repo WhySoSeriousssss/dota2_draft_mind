@@ -1,4 +1,5 @@
 import { fetchConfig, fetchRecommendations } from "./api.js";
+import { initializeLeaderboard } from "./leaderboard.js";
 import { state } from "./state.js";
 
     const elements = {
@@ -366,6 +367,7 @@ import { state } from "./state.js";
 
         state.heroes = config.heroes;
         state.heroById = new Map(config.heroes.map((hero) => [hero.id, hero]));
+        initializeLeaderboard(config);
         config.rank_segments.forEach((rank) => {
           const option = document.createElement("option");
           option.value = rank;

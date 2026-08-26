@@ -4,24 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
-  <title>Draft Score V1</title>
+  <title>DOTA 2 Draft Mind</title>
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
   <header class="app-header">
     <div class="brand">
-      <h1>Draft Score V1</h1>
-      <span>Dota 2 Ranked Draft Assistant</span>
+      <h1>DOTA 2 Draft Mind</h1>
+      <span>Ranked Draft Intelligence</span>
     </div>
     <div class="data-status" id="dataStatus">正在连接基础数据</div>
   </header>
 
-  <nav class="mobile-tabs" aria-label="移动端视图">
-    <button type="button" class="active" data-view="draft">阵容</button>
-    <button type="button" data-view="results">推荐</button>
+  <nav class="page-tabs" aria-label="功能页面">
+    <button type="button" class="active" data-page="draft-assistant">选人助手</button>
+    <button type="button" data-page="hero-leaderboard">英雄排行榜</button>
   </nav>
 
-  <main class="workspace">
+  <div id="draftAssistantPage">
+    <nav class="mobile-tabs" aria-label="移动端视图">
+      <button type="button" class="active" data-view="draft">阵容</button>
+      <button type="button" data-view="results">推荐</button>
+    </nav>
+
+    <main class="workspace">
     <aside class="draft-panel">
       <section class="section">
         <div class="section-heading"><h2>比赛参数</h2></div>
@@ -98,6 +104,44 @@
         <div class="empty-results">正在载入英雄数据</div>
       </div>
     </section>
+    </main>
+  </div>
+
+  <main class="leaderboard-page" id="heroLeaderboardPage" hidden>
+    <div class="leaderboard-heading">
+      <div>
+        <h2>英雄排行榜</h2>
+        <div class="leaderboard-meta" id="leaderboardMeta">等待统计数据</div>
+      </div>
+      <div class="leaderboard-filters">
+        <label>
+          <span>分段</span>
+          <select id="leaderboardRank"></select>
+        </label>
+        <label>
+          <span>搜索</span>
+          <input id="leaderboardSearch" type="search" placeholder="英雄名称" autocomplete="off">
+        </label>
+      </div>
+    </div>
+    <div class="message-bar" id="leaderboardMessage" role="alert"></div>
+    <div class="leaderboard-table-wrap">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th class="leaderboard-position">#</th>
+            <th aria-sort="none"><button type="button" data-sort="name">英雄 <span class="sort-indicator"></span></button></th>
+            <th aria-sort="none"><button type="button" data-sort="pick_rate">Pick 率 <span class="sort-indicator"></span></button></th>
+            <th aria-sort="descending"><button type="button" data-sort="win_rate">胜率 <span class="sort-indicator">▼</span></button></th>
+            <th>对阵克制</th>
+            <th>被克制</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <tr><td colspan="6" class="leaderboard-empty">切换到排行榜后载入数据</td></tr>
+        </tbody>
+      </table>
+    </div>
   </main>
 
   <script type="module" src="/static/js/app.js"></script>

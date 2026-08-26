@@ -11,6 +11,9 @@ from ..schemas import (
     DraftRecommendationResponse,
     DraftWeights,
     HealthResponse,
+    LeaderboardHero,
+    LeaderboardMatchup,
+    LeaderboardResponse,
     RecommendationResult,
 )
 
@@ -19,6 +22,7 @@ class DraftService:
     def __init__(self, repository: DraftRepository):
         self.repository = repository
         self._scorer_cache = {}
+        self._leaderboard_cache = {}
         self._cache_lock = Lock()
 
     def get_config(self):
@@ -92,6 +96,126 @@ class DraftService:
             rank=scorer.rank_segment,
             weights=request.weights,
             results=response_results,
+            dataset_version=self.repository.dataset_version,
+        )
+
+    def get_leaderboard(self, rank_segment, sort_by, order):
+        normalized_rank = rank_segment.strip().lower()
+        leaderboard = self._leaderboard_cache.get(normalized_rank)
+
+        if leaderboard is None:
+            with self._cache_lock:
+                leaderboard = self._leaderboard_cache.get(normalized_rank)
+
+                if leaderboard is None:
+                    leaderboard = self._build_leaderboard(rank_segment)
+                    self._leaderboard_cache[normalized_rank] = leaderboard
+
+        heroes = list(leaderboard.heroes)
+        reverse = order == "desc"
+
+        if sort_by == "name":
+            heroes.sort(
+                key=lambda hero: hero.hero_name.lower(),
+                reverse=reverse,
+            )
+        else:
+            available = [
+                hero for hero in heroes
+                if getattr(hero, sort_by) is not None
+            ]
+            unavailable = [
+                hero for hero in heroes
+                if getattr(hero, sort_by) is None
+            ]
+            available.sort(
+                key=lambda hero: (
+                    getattr(hero, sort_by),
+                    hero.appearances,
+                    -hero.hero_id,
+                ),
+                reverse=reverse,
+            )
+            heroes = available + unavailable
+
+        return leaderboard.model_copy(update={"heroes": heroes})
+
+    def _build_leaderboard(self, rank_segment):
+        data = self.repository.get_leaderboard_data(rank_segment)
+        hero_metadata = {
+            hero["id"]: hero for hero in self.repository.heroes
+        }
+        base_stats = {
+            hero_id: {
+                "appearances": appearances,
+                "win_rate": wins / appearances if appearances else None,
+            }
+            for hero_id, appearances, wins in data["base_rows"]
+        }
+        matchups_by_hero = {}
+
+        for hero_id, enemy_id, appearances, wins in data["matchup_rows"]:
+            base_stat = base_stats.get(hero_id)
+
+            if (
+                appearances < 20
+                or not base_stat
+                or base_stat["win_rate"] is None
+                or enemy_id not in hero_metadata
+            ):
+                continue
+
+            matchup_win_rate = wins / appearances
+            enemy = hero_metadata[enemy_id]
+            matchup = LeaderboardMatchup(
+                hero_id=enemy_id,
+                hero_name=enemy["name"],
+                image=enemy["image"],
+                appearances=appearances,
+                win_rate=matchup_win_rate,
+                advantage=matchup_win_rate - base_stat["win_rate"],
+            )
+            matchups_by_hero.setdefault(hero_id, []).append(matchup)
+
+        heroes = []
+
+        for hero_id, hero in hero_metadata.items():
+            base_stat = base_stats.get(
+                hero_id,
+                {"appearances": 0, "win_rate": None},
+            )
+            matchups = matchups_by_hero.get(hero_id, [])
+            counters = sorted(
+                [item for item in matchups if item.advantage > 0],
+                key=lambda item: (item.advantage, item.appearances),
+                reverse=True,
+            )[:5]
+            countered_by = sorted(
+                [item for item in matchups if item.advantage < 0],
+                key=lambda item: (item.advantage, -item.appearances),
+            )[:5]
+            pick_rate = (
+                base_stat["appearances"] / data["total_matches"]
+                if data["total_matches"]
+                else 0.0
+            )
+            heroes.append(
+                LeaderboardHero(
+                    hero_id=hero_id,
+                    hero_name=hero["name"],
+                    image=hero["image"],
+                    appearances=base_stat["appearances"],
+                    pick_rate=pick_rate,
+                    win_rate=base_stat["win_rate"],
+                    counters=counters,
+                    countered_by=countered_by,
+                )
+            )
+
+        return LeaderboardResponse(
+            rank=data["rank"],
+            total_matches=data["total_matches"],
+            heroes=heroes,
             dataset_version=self.repository.dataset_version,
         )
 

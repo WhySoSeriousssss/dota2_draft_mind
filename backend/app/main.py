@@ -17,7 +17,7 @@ def create_app(settings=None):
         heroes_path=settings.heroes_path,
     )
     app = FastAPI(
-        title="Dota 2 Draft Score API",
+        title="DOTA 2 Draft Mind API",
         version="1.0.0",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
