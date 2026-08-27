@@ -33,6 +33,13 @@ class DraftService:
         )
         return AppConfigResponse(
             heroes=self.repository.heroes,
+            positions=[
+                {
+                    **position,
+                    "hero_ids": self.repository.position_heroes[position["id"]],
+                }
+                for position in self.repository.positions
+            ],
             rank_segments=self.repository.rank_segments,
             defaults=ConfigDefaults(
                 rank=default_rank,
@@ -52,13 +59,35 @@ class DraftService:
     def recommend(self, request: DraftRecommendationRequest):
         scorer = self._get_scorer(request.rank)
         excluded_hero_ids = set(request.excluded_hero_ids)
+        selected_position_ids = set(request.position_ids)
+        available_position_ids = set(self.repository.position_heroes)
+        unknown_position_ids = selected_position_ids - available_position_ids
         unknown_exclusions = excluded_hero_ids - set(scorer.heroes)
+
+        if unknown_position_ids:
+            unknown_text = ", ".join(
+                str(position_id)
+                for position_id in sorted(unknown_position_ids)
+            )
+            raise ValueError(f"未知位置 ID：{unknown_text}")
 
         if unknown_exclusions:
             unknown_text = ", ".join(
                 str(hero_id) for hero_id in sorted(unknown_exclusions)
             )
             raise ValueError(f"未知排除英雄 ID：{unknown_text}")
+
+        candidate_hero_ids = None
+
+        if selected_position_ids:
+            candidate_hero_ids = sorted(
+                {
+                    hero_id
+                    for position_id in selected_position_ids
+                    for hero_id in self.repository.position_heroes[position_id]
+                }
+                - excluded_hero_ids
+            )
 
         all_results = scorer.recommend(
             allies=request.allies,
@@ -67,6 +96,7 @@ class DraftService:
             beta=request.weights.beta,
             gamma=request.weights.gamma,
             top_k=len(scorer.heroes),
+            candidate_hero_ids=candidate_hero_ids,
         )
         filtered_results = [
             result
@@ -94,6 +124,7 @@ class DraftService:
 
         return DraftRecommendationResponse(
             rank=scorer.rank_segment,
+            position_ids=request.position_ids,
             weights=request.weights,
             results=response_results,
             dataset_version=self.repository.dataset_version,

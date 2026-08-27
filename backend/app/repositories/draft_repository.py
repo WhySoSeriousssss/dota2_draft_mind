@@ -17,10 +17,21 @@ RANK_ORDER = [
 
 
 class DraftRepository:
-    def __init__(self, database_path: Path, heroes_path: Path):
+    def __init__(
+        self,
+        database_path: Path,
+        heroes_path: Path,
+        hero_positions_path: Path,
+    ):
         self.database_path = Path(database_path)
         self.heroes_path = Path(heroes_path)
+        self.hero_positions_path = Path(hero_positions_path)
         self._heroes = self._load_heroes()
+        (
+            self._positions,
+            self._hero_positions,
+            self._position_heroes,
+        ) = self._load_hero_positions()
         self._rank_segments, self._metadata = self._load_database_info()
 
     @property
@@ -30,6 +41,18 @@ class DraftRepository:
     @property
     def rank_segments(self):
         return self._rank_segments
+
+    @property
+    def positions(self):
+        return self._positions
+
+    @property
+    def hero_positions(self):
+        return self._hero_positions
+
+    @property
+    def position_heroes(self):
+        return self._position_heroes
 
     @property
     def dataset_version(self):
@@ -131,6 +154,53 @@ class DraftRepository:
             )
 
         return sorted(heroes, key=lambda hero: hero["name"])
+
+    def _load_hero_positions(self):
+        with self.hero_positions_path.open("r", encoding="utf-8") as file:
+            raw_config = json.load(file)
+
+        positions = [
+            {
+                "id": int(position_id),
+                "key": position["key"],
+                "name": position["name"],
+            }
+            for position_id, position in raw_config["positions"].items()
+        ]
+        positions.sort(key=lambda position: position["id"])
+        position_ids = {position["id"] for position in positions}
+        hero_ids = {hero["id"] for hero in self.heroes}
+        hero_positions = {
+            int(hero_id): list(dict.fromkeys(position_values))
+            for hero_id, position_values in raw_config["heroes"].items()
+        }
+        configured_hero_ids = set(hero_positions)
+
+        if configured_hero_ids != hero_ids:
+            missing = sorted(hero_ids - configured_hero_ids)
+            unknown = sorted(configured_hero_ids - hero_ids)
+            raise ValueError(
+                "英雄位置配置与英雄元数据不一致："
+                f"缺失 {missing}；未知 {unknown}"
+            )
+
+        for hero_id, configured_positions in hero_positions.items():
+            invalid_positions = set(configured_positions) - position_ids
+
+            if not configured_positions or invalid_positions:
+                raise ValueError(
+                    f"英雄 {hero_id} 的位置配置无效：{configured_positions}"
+                )
+
+        position_heroes = {
+            position_id: [
+                hero_id
+                for hero_id, configured_positions in hero_positions.items()
+                if position_id in configured_positions
+            ]
+            for position_id in position_ids
+        }
+        return positions, hero_positions, position_heroes
 
     def _load_database_info(self):
         connection = sqlite3.connect(self.database_path)

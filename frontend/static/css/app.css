@@ -198,6 +198,50 @@
       padding: 0 11px;
     }
 
+    .position-field {
+      margin-top: 14px;
+    }
+
+    .position-filter {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .position-option {
+      position: relative;
+      min-width: 0;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 680;
+    }
+
+    .position-option:hover {
+      border-color: #53616a;
+      color: var(--text);
+    }
+
+    .position-option:has(input:checked) {
+      border-color: #9f7d38;
+      background: #3c321f;
+      color: var(--text);
+    }
+
+    .position-option input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+
     .weights {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));

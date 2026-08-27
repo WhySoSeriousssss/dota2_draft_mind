@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Hero Position Debug Tool</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="toolbar">
+    <div>
+      <h1>Hero Position Debug Tool</h1>
+      <p>本地审核与维护英雄常见位置</p>
+    </div>
+    <div class="toolbar-actions">
+      <span class="change-count" id="changeCount">无未保存修改</span>
+      <button type="button" class="save-button" id="saveButton" disabled>保存修改</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary" id="summary"></section>
+
+    <section class="filters">
+      <label>
+        <span>搜索英雄</span>
+        <input id="searchInput" type="search" placeholder="名称或 ID" autocomplete="off">
+      </label>
+      <label>
+        <span>查看范围</span>
+        <select id="positionFilter">
+          <option value="all">全部英雄</option>
+          <option value="multi">多位置英雄</option>
+        </select>
+      </label>
+      <button type="button" id="resetButton" disabled>撤销未保存修改</button>
+    </section>
+
+    <div class="message" id="message" role="status"></div>
+
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr id="tableHeader">
+            <th class="hero-column">英雄</th>
+          </tr>
+        </thead>
+        <tbody id="heroRows">
+          <tr><td class="loading">正在载入位置配置</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>

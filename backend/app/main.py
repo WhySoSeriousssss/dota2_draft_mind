@@ -15,6 +15,7 @@ def create_app(settings=None):
     repository = DraftRepository(
         database_path=settings.database_path,
         heroes_path=settings.heroes_path,
+        hero_positions_path=settings.hero_positions_path,
     )
     app = FastAPI(
         title="DOTA 2 Draft Mind API",

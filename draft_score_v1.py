@@ -192,12 +192,21 @@ class DraftScoreV1:
         beta,
         gamma,
         top_k,
+        candidate_hero_ids=None,
     ):
         self.validate_picks(allies, enemies)
         picked_hero_ids = set(allies) | set(enemies)
+        candidate_hero_ids = (
+            self.heroes
+            if candidate_hero_ids is None
+            else candidate_hero_ids
+        )
         results = []
 
-        for hero_id in self.heroes:
+        for hero_id in candidate_hero_ids:
+            if hero_id not in self.heroes:
+                raise ValueError(f"未知候选英雄 ID：{hero_id}")
+
             if hero_id in picked_hero_ids:
                 continue
 

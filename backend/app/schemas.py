@@ -14,6 +14,13 @@ class HeroResponse(StrictModel):
     icon: str
 
 
+class PositionResponse(StrictModel):
+    id: int
+    key: str
+    name: str
+    hero_ids: list[int]
+
+
 class DraftWeights(StrictModel):
     alpha: float = Field(default=1.0, ge=0.0, le=5.0)
     beta: float = Field(default=0.5, ge=0.0, le=5.0)
@@ -28,6 +35,7 @@ class ConfigDefaults(StrictModel):
 
 class AppConfigResponse(StrictModel):
     heroes: list[HeroResponse]
+    positions: list[PositionResponse]
     rank_segments: list[str]
     defaults: ConfigDefaults
     dataset_version: str | None = None
@@ -38,6 +46,7 @@ class DraftRecommendationRequest(StrictModel):
     allies: list[int] = Field(default_factory=list, max_length=4)
     enemies: list[int] = Field(default_factory=list, max_length=5)
     excluded_hero_ids: list[int] = Field(default_factory=list, max_length=127)
+    position_ids: list[int] = Field(default_factory=list, max_length=4)
     weights: DraftWeights = Field(default_factory=DraftWeights)
     top_k: int = Field(default=15, ge=1, le=127)
 
@@ -57,6 +66,7 @@ class RecommendationResult(StrictModel):
 
 class DraftRecommendationResponse(StrictModel):
     rank: str
+    position_ids: list[int]
     weights: DraftWeights
     results: list[RecommendationResult]
     model_version: str = "draft_score_v1"

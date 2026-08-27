@@ -4,6 +4,7 @@ export const state = {
   allies: [],
   enemies: [],
   excludedHeroIds: [],
+  selectedPositionIds: [],
   activeSide: "ally",
   attribute: "all",
   search: "",

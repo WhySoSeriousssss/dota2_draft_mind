@@ -4,6 +4,7 @@ import { state } from "./state.js";
 
     const elements = {
       rank: document.getElementById("rankSelect"),
+      positionFilter: document.getElementById("positionFilter"),
       alpha: document.getElementById("alphaInput"),
       beta: document.getElementById("betaInput"),
       gamma: document.getElementById("gammaInput"),
@@ -58,6 +59,29 @@ import { state } from "./state.js";
       elements.alphaValue.value = Number(elements.alpha.value).toFixed(2);
       elements.betaValue.value = Number(elements.beta.value).toFixed(2);
       elements.gammaValue.value = Number(elements.gamma.value).toFixed(2);
+    }
+
+    function renderPositionFilter(positions) {
+      elements.positionFilter.replaceChildren();
+
+      positions.forEach((position) => {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        const text = document.createElement("span");
+        label.className = "position-option";
+        input.type = "checkbox";
+        input.value = position.id;
+        text.textContent = position.name;
+        input.addEventListener("change", () => {
+          state.selectedPositionIds = Array.from(
+            elements.positionFilter.querySelectorAll("input:checked"),
+            (item) => Number(item.value),
+          );
+          scheduleRecommendation();
+        });
+        label.append(input, text);
+        elements.positionFilter.append(label);
+      });
     }
 
     function renderTeam(side) {
@@ -295,6 +319,7 @@ import { state } from "./state.js";
           allies: state.allies,
           enemies: state.enemies,
           excluded_hero_ids: state.excludedHeroIds,
+          position_ids: state.selectedPositionIds,
           weights: {
             alpha: Number(elements.alpha.value),
             beta: Number(elements.beta.value),
@@ -367,6 +392,7 @@ import { state } from "./state.js";
 
         state.heroes = config.heroes;
         state.heroById = new Map(config.heroes.map((hero) => [hero.id, hero]));
+        renderPositionFilter(config.positions);
         initializeLeaderboard(config);
         config.rank_segments.forEach((rank) => {
           const option = document.createElement("option");

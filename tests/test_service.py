@@ -12,6 +12,12 @@ def test_config_returns_all_heroes_and_rank_segments():
     config = create_service().get_config()
 
     assert len(config.heroes) == 127
+    assert [position.key for position in config.positions] == [
+        "carry",
+        "mid",
+        "offlane",
+        "support",
+    ]
     assert config.rank_segments == [
         "Herald",
         "Guardian",
@@ -68,6 +74,40 @@ def test_excluded_heroes_are_not_recommended():
     result_ids = {result.hero_id for result in response.results}
     assert 52 not in result_ids
     assert 50 not in result_ids
+
+
+def test_position_filter_only_scores_matching_heroes():
+    service = create_service()
+    request = DraftRecommendationRequest.model_validate(
+        {
+            "rank": "Legend",
+            "position_ids": [0, 1],
+            "top_k": 127,
+        }
+    )
+    response = service.recommend(request)
+    allowed_hero_ids = (
+        set(service.repository.position_heroes[0])
+        | set(service.repository.position_heroes[1])
+    )
+    result_ids = {result.hero_id for result in response.results}
+
+    assert service.repository.hero_positions[82] == [0, 1]
+    assert response.position_ids == [0, 1]
+    assert result_ids
+    assert result_ids <= allowed_hero_ids
+    assert 82 in allowed_hero_ids
+    assert 5 not in result_ids
+
+
+def test_unknown_position_is_rejected():
+    request = DraftRecommendationRequest(
+        rank="Legend",
+        position_ids=[9],
+    )
+
+    with pytest.raises(ValueError, match="未知位置 ID：9"):
+        create_service().recommend(request)
 
 
 def test_invalid_draft_is_rejected():
