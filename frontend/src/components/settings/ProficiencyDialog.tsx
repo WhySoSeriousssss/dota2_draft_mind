@@ -38,8 +38,7 @@ export function ProficiencyDialog({ config, open, onOpenChange }: ProficiencyDia
       const matchesFilter = filterValue === null || proficiency === filterValue;
       const matchesSearch = !normalizedSearch
         || hero.name.toLowerCase().includes(normalizedSearch)
-        || heroName(hero.id, hero.name).toLowerCase().includes(normalizedSearch)
-        || String(hero.id) === normalizedSearch;
+        || heroName(hero.id, hero.name).toLowerCase().includes(normalizedSearch);
       return matchesFilter && matchesSearch;
     });
   }, [config.heroes, filter, heroName, proficiencies, search]);
@@ -107,7 +106,7 @@ export function ProficiencyDialog({ config, open, onOpenChange }: ProficiencyDia
                   <div className="proficiency-row" role="row" key={hero.id}>
                     <div className="hero-identity" role="cell">
                       <HeroImage src={hero.image} alt={displayName} />
-                      <span><strong>{displayName}</strong><small>ID {hero.id}</small></span>
+                      <span><strong>{displayName}</strong></span>
                     </div>
                     <div className="proficiency-options" role="cell" aria-label={`${displayName} ${t("draft.proficiency")}`}>
                       {levels.map((level) => (

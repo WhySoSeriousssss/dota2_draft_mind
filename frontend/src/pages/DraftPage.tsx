@@ -121,8 +121,7 @@ function HeroPool({ heroes, selectedIds }: HeroPoolProps) {
         || hero.attribute === attribute;
       const matchesSearch = !normalized
         || hero.name.toLowerCase().includes(normalized)
-        || heroName(hero.id, hero.name).toLowerCase().includes(normalized)
-        || String(hero.id) === normalized;
+        || heroName(hero.id, hero.name).toLowerCase().includes(normalized);
       return matchesAttribute && matchesSearch;
     });
   }, [attribute, heroName, heroes, search]);
@@ -172,7 +171,7 @@ function HeroPool({ heroes, selectedIds }: HeroPoolProps) {
               key={hero.id}
               disabled={selectedIds.has(hero.id)}
               onClick={() => addHero(hero.id)}
-              title={`${displayName} · ID ${hero.id}`}
+              title={displayName}
             >
               <HeroImage src={hero.image} alt={displayName} />
               <span>{displayName}</span>
@@ -235,7 +234,7 @@ function Recommendations({ results, heroById, rank, isFetching, error, onRefresh
               return (
                 <tr key={result.hero_id}>
                   <td className="result-rank">{String(pageStart + index + 1).padStart(2, "0")}</td>
-                  <td><div className="result-hero"><HeroImage src={hero.image} alt={displayName} /><span><strong>{displayName}</strong><small>ID {hero.id}</small></span></div></td>
+                  <td><div className="result-hero"><HeroImage src={hero.image} alt={displayName} /><span><strong>{displayName}</strong></span></div></td>
                   <td className="score-cell">{result.score.toFixed(4)}</td>
                   <td>{(result.base_score * 100).toFixed(2)}%</td>
                   <td className={contributionClass(result.counter_component)}>{signed(result.counter_component)}</td>

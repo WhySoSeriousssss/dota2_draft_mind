@@ -60,7 +60,7 @@ export function LeaderboardPage({ config }: LeaderboardPageProps) {
   const heroes = useMemo(() => {
     const normalized = search.trim().toLowerCase();
     return (query.data?.heroes ?? [])
-      .filter((hero) => !normalized || hero.hero_name.toLowerCase().includes(normalized) || heroName(hero.hero_id, hero.hero_name).toLowerCase().includes(normalized) || String(hero.hero_id) === normalized)
+      .filter((hero) => !normalized || hero.hero_name.toLowerCase().includes(normalized) || heroName(hero.hero_id, hero.hero_name).toLowerCase().includes(normalized))
       .sort((left, right) => compareHeroes(left, right, sortBy, order, heroName(left.hero_id, left.hero_name), heroName(right.hero_id, right.hero_name), locale));
   }, [heroName, locale, order, query.data?.heroes, search, sortBy]);
 
