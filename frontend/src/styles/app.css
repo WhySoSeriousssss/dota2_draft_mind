@@ -129,7 +129,7 @@ button:disabled {
 .brand-block strong {
   overflow: hidden;
   color: #f5f6f3;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.1;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -138,7 +138,7 @@ button:disabled {
 .brand-block span:last-child,
 .header-meta > span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .primary-nav {
@@ -154,7 +154,7 @@ button:disabled {
   gap: 7px;
   color: var(--muted);
   padding: 0 14px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-decoration: none;
 }
@@ -191,7 +191,7 @@ button:disabled {
   gap: 7px;
   border-radius: var(--radius);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -242,14 +242,14 @@ button:disabled {
 }
 
 .settings-dropdown strong {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
 }
 
 .settings-dropdown small,
 .settings-dropdown [role="menuitem"] > svg {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .settings-dropdown [role="separator"] {
@@ -277,7 +277,7 @@ button:disabled {
   display: block;
   color: var(--muted);
   padding: 6px 9px 5px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 650;
   text-transform: uppercase;
 }
@@ -289,12 +289,17 @@ button:disabled {
 }
 
 .draft-sidebar {
+  height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
   min-width: 0;
   border-right: 1px solid var(--border);
   background: var(--panel);
 }
 
 .draft-section {
+  flex: 0 0 auto;
   border-bottom: 1px solid var(--border);
   padding: 18px 20px;
 }
@@ -319,7 +324,7 @@ button:disabled {
 
 .section-title-row h2 {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.3;
 }
 
@@ -328,7 +333,7 @@ button:disabled {
 .recommendations-header p,
 .page-heading p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .section-title-row > div > span {
@@ -381,7 +386,7 @@ button:disabled {
   background: var(--panel-raised);
   color: var(--muted);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 650;
 }
 
@@ -427,12 +432,12 @@ button:disabled {
   color: var(--muted);
   padding: 0 2px 6px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
 }
 
 .team-column-heading small {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
 }
 
@@ -488,7 +493,7 @@ button:disabled {
   min-width: 0;
   flex: 1;
   overflow: hidden;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -513,7 +518,20 @@ button:disabled {
 }
 
 .hero-pool-section {
+  min-height: 390px;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   padding-bottom: 20px;
+}
+
+.hero-pool-section > .section-title-row {
+  flex-shrink: 0;
+}
+
+.hero-pool-section > .search-field {
+  height: 38px;
+  flex: 0 0 38px;
 }
 
 .side-toggle {
@@ -560,7 +578,7 @@ button:disabled {
   outline: 0;
   background: transparent;
   color: var(--text);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .search-field input::placeholder {
@@ -570,6 +588,7 @@ button:disabled {
 .attribute-filter {
   height: 34px;
   display: grid;
+  flex: 0 0 34px;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 3px;
   margin: 8px 0;
@@ -588,8 +607,10 @@ button:disabled {
 }
 
 .hero-grid {
-  height: 324px;
+  min-height: 180px;
+  height: auto;
   display: grid;
+  flex: 1 1 auto;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   grid-auto-rows: 58px;
   gap: 5px;
@@ -631,7 +652,7 @@ button:disabled {
   background: rgb(5 8 9 / 86%);
   color: #e9ede9;
   padding: 4px 4px 3px;
-  font-size: 8px;
+  font-size: 9px;
   font-style: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -676,14 +697,14 @@ button:disabled {
   display: block;
   margin-bottom: 6px;
   color: var(--gold);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
 }
 
 .recommendations-header h1,
 .page-heading h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1.2;
 }
 
@@ -702,7 +723,7 @@ button:disabled {
   display: grid;
   gap: 5px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .recommend-actions input {
@@ -768,7 +789,7 @@ button:disabled {
   height: 40px;
   color: var(--muted);
   background: #121618;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 650;
   text-align: right;
 }
@@ -822,14 +843,14 @@ button:disabled {
 .results-table td,
 .leaderboard-table td {
   color: #dce1de;
-  font-size: 10px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
 .result-rank {
   color: var(--gold) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-weight: 700;
 }
 
@@ -862,7 +883,7 @@ button:disabled {
 .hero-identity strong {
   overflow: hidden;
   color: var(--text);
-  font-size: 11px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -871,7 +892,7 @@ button:disabled {
 .leaderboard-hero small,
 .hero-identity small {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .score-cell,
@@ -927,12 +948,12 @@ button:disabled {
   color: var(--text);
   padding: 0 10px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .pagination span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .inline-error {
@@ -942,7 +963,7 @@ button:disabled {
   background: #321e1d;
   color: #f1aaa5;
   padding: 10px 12px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .empty-state {
@@ -950,7 +971,7 @@ button:disabled {
   display: grid;
   place-items: center;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .empty-state.compact {
@@ -1085,13 +1106,13 @@ button:disabled {
 
 .dialog-header h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .dialog-header p {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .dialog-header .icon-button {
@@ -1140,13 +1161,13 @@ button:disabled {
 }
 
 .weight-item-heading strong {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .weight-item-heading span,
 .weight-item-heading output {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .weight-item-heading output {
@@ -1229,7 +1250,7 @@ button:disabled {
   color: var(--muted);
   background: #111517;
   padding: 0 14px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 650;
 }
 
@@ -1283,7 +1304,7 @@ button:disabled {
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 650;
 }
 
@@ -1323,7 +1344,7 @@ button:disabled {
   justify-content: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .loading-mark {
@@ -1423,7 +1444,15 @@ button:disabled {
   }
 
   .draft-sidebar {
+    height: auto;
+    display: block;
+    overflow: visible;
     border-right: 0;
+  }
+
+  .hero-pool-section {
+    min-height: 0;
+    display: block;
   }
 
   .draft-results {
@@ -1432,6 +1461,7 @@ button:disabled {
 
   .hero-grid {
     height: 300px;
+    min-height: 0;
   }
 
   .recommendations-panel {
@@ -1441,7 +1471,7 @@ button:disabled {
 
 @media (max-width: 640px) {
   .brand-block strong {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .brand-emblem {
