@@ -1,5 +1,10 @@
 import { fetchConfig, fetchRecommendations } from "./api.js";
 import { initializeLeaderboard } from "./leaderboard.js";
+import {
+  loadDraftPreferences,
+  resolveDraftPreferences,
+  saveDraftPreferences,
+} from "./preferences.js";
 import { state } from "./state.js";
 
     const elements = {
@@ -61,6 +66,18 @@ import { state } from "./state.js";
       elements.gammaValue.value = Number(elements.gamma.value).toFixed(2);
     }
 
+    function persistDraftPreferences() {
+      saveDraftPreferences({
+        rank: elements.rank.value,
+        positionIds: state.selectedPositionIds,
+        weights: {
+          alpha: Number(elements.alpha.value),
+          beta: Number(elements.beta.value),
+          gamma: Number(elements.gamma.value),
+        },
+      });
+    }
+
     function renderPositionFilter(positions) {
       elements.positionFilter.replaceChildren();
 
@@ -71,12 +88,14 @@ import { state } from "./state.js";
         label.className = "position-option";
         input.type = "checkbox";
         input.value = position.id;
+        input.checked = state.selectedPositionIds.includes(position.id);
         text.textContent = position.name;
         input.addEventListener("change", () => {
           state.selectedPositionIds = Array.from(
             elements.positionFilter.querySelectorAll("input:checked"),
             (item) => Number(item.value),
           );
+          persistDraftPreferences();
           scheduleRecommendation();
         });
         label.append(input, text);
@@ -371,10 +390,14 @@ import { state } from "./state.js";
       [elements.alpha, elements.beta, elements.gamma].forEach((input) => {
         input.addEventListener("input", () => {
           updateWeightLabels();
+          persistDraftPreferences();
           scheduleRecommendation();
         });
       });
-      elements.rank.addEventListener("change", scheduleRecommendation);
+      elements.rank.addEventListener("change", () => {
+        persistDraftPreferences();
+        scheduleRecommendation();
+      });
       elements.recommendCount.addEventListener("change", () => {
         const count = Math.min(127, Math.max(1, Number.parseInt(elements.recommendCount.value, 10) || 15));
         elements.recommendCount.value = String(count);
@@ -389,21 +412,26 @@ import { state } from "./state.js";
 
       try {
         const config = await fetchConfig();
+        const preferences = resolveDraftPreferences(
+          loadDraftPreferences(),
+          config,
+        );
 
         state.heroes = config.heroes;
         state.heroById = new Map(config.heroes.map((hero) => [hero.id, hero]));
+        state.selectedPositionIds = preferences.positionIds;
         renderPositionFilter(config.positions);
         initializeLeaderboard(config);
         config.rank_segments.forEach((rank) => {
           const option = document.createElement("option");
           option.value = rank;
           option.textContent = rank;
-          option.selected = rank === config.defaults.rank;
+          option.selected = rank === preferences.rank;
           elements.rank.append(option);
         });
-        elements.alpha.value = config.defaults.weights.alpha;
-        elements.beta.value = config.defaults.weights.beta;
-        elements.gamma.value = config.defaults.weights.gamma;
+        elements.alpha.value = preferences.weights.alpha;
+        elements.beta.value = preferences.weights.beta;
+        elements.gamma.value = preferences.weights.gamma;
         elements.recommendCount.value = config.defaults.top_k;
         elements.dataStatus.textContent = `${config.heroes.length} 位英雄 · ${config.rank_segments.length} 个分段`;
         updateWeightLabels();
