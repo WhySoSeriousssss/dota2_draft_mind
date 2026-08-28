@@ -3,6 +3,7 @@ import * as Slider from "@radix-ui/react-slider";
 import { Activity, Handshake, Shield, Sparkles, X } from "lucide-react";
 
 import { useDraftStore } from "../../store/draftStore";
+import { useI18n, type TranslationKey } from "../../lib/i18n";
 import type { DraftWeights } from "../../types/api";
 
 interface WeightsDialogProps {
@@ -12,16 +13,14 @@ interface WeightsDialogProps {
 
 const controls: Array<{
   key: keyof DraftWeights;
-  label: string;
-  description: string;
   max: number;
   step: number;
   icon: typeof Activity;
 }> = [
-  { key: "alpha", label: "基础胜率", description: "英雄在当前分段的整体表现", max: 2, step: 0.05, icon: Activity },
-  { key: "beta", label: "对位克制", description: "面对敌方阵容时的对阵优势", max: 2, step: 0.05, icon: Shield },
-  { key: "gamma", label: "阵容协同", description: "与我方已选英雄的组合表现", max: 2, step: 0.05, icon: Handshake },
-  { key: "delta", label: "个人熟练度", description: "不会、还行和绝活的个人偏好", max: 0.2, step: 0.01, icon: Sparkles },
+  { key: "alpha", max: 2, step: 0.05, icon: Activity },
+  { key: "beta", max: 2, step: 0.05, icon: Shield },
+  { key: "gamma", max: 2, step: 0.05, icon: Handshake },
+  { key: "delta", max: 0.2, step: 0.01, icon: Sparkles },
 ];
 
 const symbols: Record<keyof DraftWeights, string> = {
@@ -32,6 +31,7 @@ const symbols: Record<keyof DraftWeights, string> = {
 };
 
 export function WeightsDialog({ open, onOpenChange }: WeightsDialogProps) {
+  const { t } = useI18n();
   const weights = useDraftStore((state) => state.weights);
   const setWeight = useDraftStore((state) => state.setWeight);
 
@@ -42,10 +42,10 @@ export function WeightsDialog({ open, onOpenChange }: WeightsDialogProps) {
         <Dialog.Content className="dialog-content weights-dialog">
           <header className="dialog-header">
             <div>
-              <Dialog.Title>Draft Score 系数</Dialog.Title>
-              <Dialog.Description>控制不同数据在推荐结果中的影响程度</Dialog.Description>
+              <Dialog.Title>{t("weights.title")}</Dialog.Title>
+              <Dialog.Description>{t("weights.description")}</Dialog.Description>
             </div>
-            <Dialog.Close className="icon-button" aria-label="关闭">
+            <Dialog.Close className="icon-button" aria-label={t("common.close")}>
               <X size={18} />
             </Dialog.Close>
           </header>
@@ -53,13 +53,15 @@ export function WeightsDialog({ open, onOpenChange }: WeightsDialogProps) {
           <div className="weights-grid">
             {controls.map((control) => {
               const Icon = control.icon;
+              const label = t(`weights.${control.key}.label` as TranslationKey);
+              const description = t(`weights.${control.key}.description` as TranslationKey);
               return (
                 <section className="weight-item" key={control.key}>
                   <div className="weight-item-heading">
                     <span className="weight-icon"><Icon size={17} /></span>
                     <div>
-                      <strong>{control.label}</strong>
-                      <span>{control.description}</span>
+                      <strong>{label}</strong>
+                      <span>{description}</span>
                     </div>
                     <output>{symbols[control.key]} {weights[control.key].toFixed(2)}</output>
                   </div>
@@ -70,7 +72,7 @@ export function WeightsDialog({ open, onOpenChange }: WeightsDialogProps) {
                     max={control.max}
                     step={control.step}
                     onValueChange={([value]) => setWeight(control.key, value)}
-                    aria-label={control.label}
+                    aria-label={label}
                   >
                     <Slider.Track className="slider-track">
                       <Slider.Range className="slider-range" />

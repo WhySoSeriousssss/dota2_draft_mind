@@ -14,7 +14,8 @@ import { useMemo, useState } from "react";
 
 import { HeroImage } from "../components/HeroImage";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { fetchRecommendations } from "../lib/api";
+import { DEFAULT_API_ERROR, fetchRecommendations } from "../lib/api";
+import { useI18n, type TranslationKey } from "../lib/i18n";
 import { useDraftStore, type DraftSide } from "../store/draftStore";
 import type {
   AppConfig,
@@ -31,13 +32,7 @@ interface DraftPageProps {
 type AttributeFilter = "all" | "all_attr" | HeroAttribute;
 type MobileView = "draft" | "results";
 
-const attributeFilters: Array<{ value: AttributeFilter; label: string }> = [
-  { value: "all", label: "全部" },
-  { value: "str", label: "力量" },
-  { value: "agi", label: "敏捷" },
-  { value: "int", label: "智力" },
-  { value: "all_attr", label: "全才" },
-];
+const attributeFilters: AttributeFilter[] = ["all", "str", "agi", "int", "all_attr"];
 
 function signed(value: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(4)}`;
@@ -57,6 +52,7 @@ interface TeamColumnProps {
 }
 
 function TeamColumn({ side, picks, capacity, heroById }: TeamColumnProps) {
+  const { heroName, t } = useI18n();
   const activeSide = useDraftStore((state) => state.activeSide);
   const setActiveSide = useDraftStore((state) => state.setActiveSide);
   const removeHero = useDraftStore((state) => state.removeHero);
@@ -69,7 +65,7 @@ function TeamColumn({ side, picks, capacity, heroById }: TeamColumnProps) {
         className={clsx("team-column-heading", activeSide === side && "active")}
         onClick={() => setActiveSide(side)}
       >
-        <span>{isAlly ? "我方阵容" : "敌方阵容"}</span>
+        <span>{isAlly ? t("draft.allyLineup") : t("draft.enemyLineup")}</span>
         <small>{picks.length} / {capacity}</small>
       </button>
       <div className="pick-list">
@@ -83,17 +79,18 @@ function TeamColumn({ side, picks, capacity, heroById }: TeamColumnProps) {
                 type="button"
                 key={`empty-${index}`}
                 onClick={() => setActiveSide(side)}
-                aria-label={`添加${isAlly ? "我方" : "敌方"}英雄`}
+                aria-label={t("draft.addHero", { side: isAlly ? t("draft.ally") : t("draft.enemy") })}
               >
                 <Plus size={16} />
               </button>
             );
           }
+          const displayName = heroName(hero.id, hero.name);
           return (
             <div className="pick-slot" key={hero.id}>
-              <HeroImage src={hero.icon || hero.image} alt={hero.name} />
-              <span>{hero.name}</span>
-              <button type="button" onClick={() => removeHero(hero.id, side)} aria-label={`移除 ${hero.name}`}>
+              <HeroImage src={hero.icon || hero.image} alt={displayName} />
+              <span>{displayName}</span>
+              <button type="button" onClick={() => removeHero(hero.id, side)} aria-label={t("draft.removeHero", { hero: displayName })}>
                 <X size={14} />
               </button>
             </div>
@@ -110,6 +107,7 @@ interface HeroPoolProps {
 }
 
 function HeroPool({ heroes, selectedIds }: HeroPoolProps) {
+  const { heroName, t } = useI18n();
   const [search, setSearch] = useState("");
   const [attribute, setAttribute] = useState<AttributeFilter>("all");
   const activeSide = useDraftStore((state) => state.activeSide);
@@ -123,61 +121,65 @@ function HeroPool({ heroes, selectedIds }: HeroPoolProps) {
         || hero.attribute === attribute;
       const matchesSearch = !normalized
         || hero.name.toLowerCase().includes(normalized)
+        || heroName(hero.id, hero.name).toLowerCase().includes(normalized)
         || String(hero.id) === normalized;
       return matchesAttribute && matchesSearch;
     });
-  }, [attribute, heroes, search]);
+  }, [attribute, heroName, heroes, search]);
 
   return (
     <section className="draft-section hero-pool-section">
       <div className="section-title-row">
-        <div><h2>英雄池</h2><span>点击英雄加入{activeSide === "ally" ? "我方" : "敌方"}</span></div>
-        <div className="side-toggle" aria-label="当前选择阵营">
+        <div><h2>{t("draft.heroPool")}</h2><span>{t("draft.heroPoolHint", { side: activeSide === "ally" ? t("draft.ally") : t("draft.enemy") })}</span></div>
+        <div className="side-toggle" aria-label={t("draft.activeSide")}>
           <button
             type="button"
             className={activeSide === "ally" ? "active radiant" : ""}
             onClick={() => useDraftStore.getState().setActiveSide("ally")}
-          >我方</button>
+          >{t("draft.ally")}</button>
           <button
             type="button"
             className={activeSide === "enemy" ? "active dire" : ""}
             onClick={() => useDraftStore.getState().setActiveSide("enemy")}
-          >敌方</button>
+          >{t("draft.enemy")}</button>
         </div>
       </div>
       <label className="search-field">
         <Search size={15} />
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索英雄或 ID" />
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("draft.searchHero")} />
       </label>
       <div className="attribute-filter">
         {attributeFilters.map((filter) => {
           return (
             <button
               type="button"
-              key={filter.value}
-              className={attribute === filter.value ? "active" : ""}
-              onClick={() => setAttribute(filter.value)}
+              key={filter}
+              className={attribute === filter ? "active" : ""}
+              onClick={() => setAttribute(filter)}
             >
-              {filter.label}
+              {t(`attribute.${filter}` as TranslationKey)}
             </button>
           );
         })}
       </div>
       <div className="hero-grid">
-        {filteredHeroes.map((hero) => (
-          <button
-            className="hero-tile"
-            type="button"
-            key={hero.id}
-            disabled={selectedIds.has(hero.id)}
-            onClick={() => addHero(hero.id)}
-            title={`${hero.name} · ID ${hero.id}`}
-          >
-            <HeroImage src={hero.image} alt={hero.name} />
-            <span>{hero.name}</span>
-            {selectedIds.has(hero.id) && <i><Check size={14} /></i>}
-          </button>
-        ))}
+        {filteredHeroes.map((hero) => {
+          const displayName = heroName(hero.id, hero.name);
+          return (
+            <button
+              className="hero-tile"
+              type="button"
+              key={hero.id}
+              disabled={selectedIds.has(hero.id)}
+              onClick={() => addHero(hero.id)}
+              title={`${displayName} · ID ${hero.id}`}
+            >
+              <HeroImage src={hero.image} alt={displayName} />
+              <span>{displayName}</span>
+              {selectedIds.has(hero.id) && <i><Check size={14} /></i>}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -193,6 +195,7 @@ interface RecommendationsProps {
 }
 
 function Recommendations({ results, heroById, rank, isFetching, error, onRefresh }: RecommendationsProps) {
+  const { heroName, numberLocale, rankName, t } = useI18n();
   const [page, setPage] = useState(1);
   const allies = useDraftStore((state) => state.allies);
   const enemies = useDraftStore((state) => state.enemies);
@@ -209,13 +212,13 @@ function Recommendations({ results, heroById, rank, isFetching, error, onRefresh
       <header className="recommendations-header">
         <div>
           <span className="eyebrow">DRAFT SCORE V1</span>
-          <h1>推荐英雄</h1>
-          <p>{rank} · 我方 {allies.length} · 敌方 {enemies.length} · Top {results.length}</p>
+          <h1>{t("draft.recommendations")}</h1>
+          <p>{t("draft.recommendationSummary", { rank: rankName(rank), allies: allies.length, enemies: enemies.length, count: results.length })}</p>
         </div>
         <div className="recommend-actions">
-          <label><span>推荐数</span><input type="number" min="1" max="127" value={topK} onChange={(event) => setTopK(Number(event.target.value))} /></label>
+          <label><span>{t("draft.recommendationCount")}</span><input type="number" min="1" max="127" value={topK} onChange={(event) => setTopK(Number(event.target.value))} /></label>
           <button className="primary-button" type="button" onClick={onRefresh} disabled={isFetching}>
-            <Calculator size={16} />{isFetching ? "计算中" : "计算推荐"}
+            <Calculator size={16} />{isFetching ? t("draft.calculating") : t("draft.calculate")}
           </button>
         </div>
       </header>
@@ -223,34 +226,35 @@ function Recommendations({ results, heroById, rank, isFetching, error, onRefresh
       {error && <div className="inline-error">{error}</div>}
       <div className={clsx("results-table-wrap", isFetching && "updating")}>
         <table className="results-table">
-          <thead><tr><th>#</th><th>英雄</th><th>Draft Score</th><th>基础胜率</th><th>对位贡献</th><th>协同贡献</th><th>熟练度</th><th>分段场次</th><th /></tr></thead>
+          <thead><tr><th>#</th><th>{t("common.hero")}</th><th>Draft Score</th><th>{t("draft.baseWinRate")}</th><th>{t("draft.counterContribution")}</th><th>{t("draft.synergyContribution")}</th><th>{t("draft.proficiency")}</th><th>{t("draft.rankMatches")}</th><th /></tr></thead>
           <tbody>
             {pageResults.map((result, index) => {
               const hero = heroById.get(result.hero_id);
               if (!hero) return null;
+              const displayName = heroName(hero.id, hero.name);
               return (
                 <tr key={result.hero_id}>
                   <td className="result-rank">{String(pageStart + index + 1).padStart(2, "0")}</td>
-                  <td><div className="result-hero"><HeroImage src={hero.image} alt={hero.name} /><span><strong>{hero.name}</strong><small>ID {hero.id}</small></span></div></td>
+                  <td><div className="result-hero"><HeroImage src={hero.image} alt={displayName} /><span><strong>{displayName}</strong><small>ID {hero.id}</small></span></div></td>
                   <td className="score-cell">{result.score.toFixed(4)}</td>
                   <td>{(result.base_score * 100).toFixed(2)}%</td>
                   <td className={contributionClass(result.counter_component)}>{signed(result.counter_component)}</td>
                   <td className={contributionClass(result.synergy_component)}>{signed(result.synergy_component)}</td>
                   <td className={contributionClass(result.proficiency_component)}>{signed(result.proficiency_component)}</td>
-                  <td>{result.base_appearances.toLocaleString("zh-CN")}</td>
-                  <td><button className="table-action" type="button" onClick={() => addHero(result.hero_id, "ally")} disabled={allies.length >= 4} aria-label={`将 ${hero.name} 加入我方`}><Plus size={16} /></button></td>
+                  <td>{result.base_appearances.toLocaleString(numberLocale)}</td>
+                  <td><button className="table-action" type="button" onClick={() => addHero(result.hero_id, "ally")} disabled={allies.length >= 4} aria-label={t("draft.addToAllies", { hero: displayName })}><Plus size={16} /></button></td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {!pageResults.length && !isFetching && <div className="empty-state">当前筛选条件下没有可推荐英雄</div>}
+        {!pageResults.length && !isFetching && <div className="empty-state">{t("draft.emptyRecommendations")}</div>}
       </div>
       {totalPages > 1 && (
-        <nav className="pagination" aria-label="推荐结果分页">
-          <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={currentPage === 1}><ChevronLeft size={16} />上一页</button>
-          <span>第 {currentPage} / {totalPages} 页</span>
-          <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={currentPage === totalPages}>下一页<ChevronRight size={16} /></button>
+        <nav className="pagination" aria-label={t("draft.resultsPagination")}>
+          <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={currentPage === 1}><ChevronLeft size={16} />{t("draft.previous")}</button>
+          <span>{t("draft.page", { current: currentPage, total: totalPages })}</span>
+          <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={currentPage === totalPages}>{t("draft.next")}<ChevronRight size={16} /></button>
         </nav>
       )}
     </section>
@@ -258,6 +262,7 @@ function Recommendations({ results, heroById, rank, isFetching, error, onRefresh
 }
 
 export function DraftPage({ config }: DraftPageProps) {
+  const { rankName, t } = useI18n();
   const [mobileView, setMobileView] = useState<MobileView>("draft");
   const allies = useDraftStore((state) => state.allies);
   const enemies = useDraftStore((state) => state.enemies);
@@ -292,19 +297,19 @@ export function DraftPage({ config }: DraftPageProps) {
   return (
     <main className="draft-page">
       <div className="mobile-view-tabs">
-        <button className={mobileView === "draft" ? "active" : ""} type="button" onClick={() => setMobileView("draft")}><Users size={15} />阵容</button>
-        <button className={mobileView === "results" ? "active" : ""} type="button" onClick={() => setMobileView("results")}><Calculator size={15} />推荐</button>
+        <button className={mobileView === "draft" ? "active" : ""} type="button" onClick={() => setMobileView("draft")}><Users size={15} />{t("draft.mobileDraft")}</button>
+        <button className={mobileView === "results" ? "active" : ""} type="button" onClick={() => setMobileView("results")}><Calculator size={15} />{t("draft.mobileResults")}</button>
       </div>
 
       <aside className={clsx("draft-sidebar", mobileView !== "draft" && "mobile-hidden")}>
         <section className="draft-section match-settings">
-          <div className="section-title-row"><div><h2>比赛参数</h2><span>筛选当前对局环境</span></div></div>
-          <label className="field-label"><span>分段</span><select className="control-select" value={rank} onChange={(event) => setRank(event.target.value)}>{config.rank_segments.map((segment) => <option value={segment} key={segment}>{segment}</option>)}</select></label>
-          <div className="field-label"><span>想玩的位置</span><div className="position-grid">{config.positions.map((position) => <button type="button" key={position.id} className={positionIds.includes(position.id) ? "active" : ""} onClick={() => togglePosition(position.id)}>{positionIds.includes(position.id) && <Check size={13} />}{position.name}</button>)}</div></div>
+          <div className="section-title-row"><div><h2>{t("draft.matchSettings")}</h2><span>{t("draft.matchSettingsHint")}</span></div></div>
+          <label className="field-label"><span>{t("common.rank")}</span><select className="control-select" value={rank} onChange={(event) => setRank(event.target.value)}>{config.rank_segments.map((segment) => <option value={segment} key={segment}>{rankName(segment)}</option>)}</select></label>
+          <div className="field-label"><span>{t("draft.positions")}</span><div className="position-grid">{config.positions.map((position) => <button type="button" key={position.id} className={positionIds.includes(position.id) ? "active" : ""} onClick={() => togglePosition(position.id)}>{positionIds.includes(position.id) && <Check size={13} />}{t(`position.${position.key}`)}</button>)}</div></div>
         </section>
 
         <section className="draft-section composition-section">
-          <div className="section-title-row"><div><h2>当前阵容</h2><span>选择空位后从英雄池添加</span></div></div>
+          <div className="section-title-row"><div><h2>{t("draft.composition")}</h2><span>{t("draft.compositionHint")}</span></div></div>
           <div className="teams-grid">
             <TeamColumn side="ally" picks={allies} capacity={4} heroById={heroById} />
             <TeamColumn side="enemy" picks={enemies} capacity={5} heroById={heroById} />
@@ -319,7 +324,7 @@ export function DraftPage({ config }: DraftPageProps) {
           heroById={heroById}
           rank={rank}
           isFetching={recommendationQuery.isFetching}
-          error={recommendationQuery.error?.message}
+          error={recommendationQuery.error?.message === DEFAULT_API_ERROR ? t("common.requestFailed") : recommendationQuery.error?.message}
           onRefresh={() => recommendationQuery.refetch()}
         />
       </div>

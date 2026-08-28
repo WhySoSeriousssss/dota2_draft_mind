@@ -7,6 +7,8 @@ import type {
   SortOrder,
 } from "../types/api";
 
+export const DEFAULT_API_ERROR = "DEFAULT_API_ERROR";
+
 const API_PREFIX = "/api/v1";
 
 interface ApiErrorPayload {
@@ -18,7 +20,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const payload = (await response.json()) as T & ApiErrorPayload;
 
   if (!response.ok) {
-    throw new Error(payload.error?.message || "请求失败，请稍后重试");
+    throw new Error(payload.error?.message || DEFAULT_API_ERROR);
   }
 
   return payload;

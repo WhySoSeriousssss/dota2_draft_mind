@@ -210,7 +210,7 @@ button:disabled {
 
 .settings-dropdown {
   z-index: 100;
-  width: 252px;
+  width: min(300px, calc(100vw - 24px));
   border: 1px solid var(--border-strong);
   border-radius: 8px;
   background: #1a1f22;
@@ -270,6 +270,52 @@ button:disabled {
   place-items: center;
   border-radius: var(--radius);
   color: var(--gold-bright);
+  background: var(--gold-dark);
+}
+
+.language-setting {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 8px 9px 9px;
+}
+
+.language-setting > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.language-options {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #111517;
+  padding: 3px;
+}
+
+.language-options button {
+  height: 32px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.language-options button:hover {
+  color: var(--text);
+  background: var(--panel-hover);
+}
+
+.language-options button.active {
+  color: #fff4d8;
   background: var(--gold-dark);
 }
 

@@ -5,11 +5,13 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 
 import { SettingsMenu } from "./components/settings/SettingsMenu";
 import { fetchConfig } from "./lib/api";
+import { useI18n } from "./lib/i18n";
 import { DraftPage } from "./pages/DraftPage";
 import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { useDraftStore } from "./store/draftStore";
 
 export function App() {
+  const { t } = useI18n();
   const configQuery = useQuery({
     queryKey: ["config"],
     queryFn: ({ signal }) => fetchConfig(signal),
@@ -22,15 +24,15 @@ export function App() {
   }, [configQuery.data, hydrate]);
 
   if (configQuery.isPending || (configQuery.data && !hydrated)) {
-    return <div className="app-loading"><span className="loading-mark" />正在载入比赛数据</div>;
+    return <div className="app-loading"><span className="loading-mark" />{t("app.loading")}</div>;
   }
 
   if (configQuery.isError || !configQuery.data) {
     return (
       <div className="fatal-error">
-        <strong>无法载入比赛数据</strong>
-        <span>{configQuery.error?.message ?? "请确认 FastAPI 服务正在运行"}</span>
-        <button type="button" onClick={() => configQuery.refetch()}>重新连接</button>
+        <strong>{t("app.loadError")}</strong>
+        <span>{t("app.serviceHint")}</span>
+        <button type="button" onClick={() => configQuery.refetch()}>{t("app.retry")}</button>
       </div>
     );
   }
@@ -42,16 +44,16 @@ export function App() {
       <header className="app-header">
         <div className="brand-block">
           <span className="brand-emblem"><Crosshair size={19} /></span>
-          <div><strong>DOTA 2 Draft Mind</strong><span>Ranked Draft Intelligence</span></div>
+          <div><strong>DOTA 2 Draft Mind</strong><span>{t("app.subtitle")}</span></div>
         </div>
 
-        <nav className="primary-nav" aria-label="主要功能">
-          <NavLink to="/" end><Crosshair size={16} />选人助手</NavLink>
-          <NavLink to="/leaderboard"><BarChart3 size={16} />英雄排行榜</NavLink>
+        <nav className="primary-nav" aria-label={t("nav.main")}>
+          <NavLink to="/" end><Crosshair size={16} />{t("nav.draft")}</NavLink>
+          <NavLink to="/leaderboard"><BarChart3 size={16} />{t("nav.leaderboard")}</NavLink>
         </nav>
 
         <div className="header-meta">
-          <span>{config.heroes.length} 位英雄 · {config.rank_segments.length} 个分段</span>
+          <span>{t("app.heroCount", { heroes: config.heroes.length, ranks: config.rank_segments.length })}</span>
           <SettingsMenu config={config} />
         </div>
       </header>
