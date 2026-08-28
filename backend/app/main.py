@@ -3,6 +3,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from algorithms.v2.model import ModelNotReadyError
+
 from .api.v1 import router as api_v1_router
 from .config import Settings
 from .repositories.draft_repository import DraftRepository
@@ -24,7 +26,10 @@ def create_app(settings=None):
         openapi_url="/api/openapi.json",
     )
     app.state.settings = settings
-    app.state.draft_service = DraftService(repository)
+    app.state.draft_service = DraftService(
+        repository,
+        settings.v2_model_directory,
+    )
     app.include_router(api_v1_router)
     app.mount(
         "/assets",
@@ -52,6 +57,18 @@ def create_app(settings=None):
             content={
                 "error": {
                     "code": "INVALID_DRAFT",
+                    "message": str(exc),
+                }
+            },
+        )
+
+    @app.exception_handler(ModelNotReadyError)
+    async def handle_model_not_ready(_request: Request, exc: ModelNotReadyError):
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": {
+                    "code": "MODEL_NOT_READY",
                     "message": str(exc),
                 }
             },

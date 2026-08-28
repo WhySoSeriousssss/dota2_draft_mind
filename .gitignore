@@ -6,3 +6,5 @@ metadata/backups/
 frontend/node_modules/
 frontend/dist/
 *.tsbuildinfo
+data/derived/draft_score_v2_dataset/
+models/

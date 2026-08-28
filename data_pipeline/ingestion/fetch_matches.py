@@ -3,12 +3,12 @@
 获取指定日期范围内发生的所有天梯比赛。
 
 示例：
-    python fetch_matches.py \
+    dota-fetch-matches \
         --after 2024-01-01 \
         --before 2024-02-01
 
 如果 OpenDota API 需要 API Key：
-    python fetch_matches.py \
+    dota-fetch-matches \
         --after 2024-01-01 \
         --before 2024-02-01 \
         --api-key YOUR_API_KEY

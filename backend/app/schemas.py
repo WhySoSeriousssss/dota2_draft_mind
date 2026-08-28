@@ -82,6 +82,37 @@ class DraftRecommendationResponse(StrictModel):
     dataset_version: str | None = None
 
 
+class DraftV2RecommendationRequest(StrictModel):
+    rank: str = Field(min_length=1, max_length=32)
+    allies: list[int] = Field(default_factory=list, max_length=4)
+    enemies: list[int] = Field(default_factory=list, max_length=5)
+    excluded_hero_ids: list[int] = Field(default_factory=list, max_length=127)
+    position_ids: list[int] = Field(default_factory=list, max_length=4)
+    side: Literal["radiant", "dire"] | None = None
+    top_k: int = Field(default=15, ge=1, le=127)
+
+
+class V2RecommendationResult(StrictModel):
+    hero_id: int
+    hero_name: str
+    win_probability: float = Field(ge=0.0, le=1.0)
+
+
+class DraftV2RecommendationResponse(StrictModel):
+    rank: str
+    position_ids: list[int]
+    side: Literal["radiant", "dire"] | None
+    results: list[V2RecommendationResult]
+    model_version: str
+    dataset_version: str | None = None
+
+
+class ModelStatusResponse(StrictModel):
+    model_version: str = "draft_score_v2_lightgbm"
+    status: Literal["ready", "missing", "unavailable"]
+    detail: str | None = None
+
+
 class LeaderboardMatchup(StrictModel):
     hero_id: int
     hero_name: str

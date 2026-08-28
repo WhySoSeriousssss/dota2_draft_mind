@@ -1,7 +1,12 @@
 from dataclasses import asdict
 from threading import Lock
 
-from draft_score_v1 import DraftScoreV1
+from algorithms.v1 import DraftScoreV1
+from algorithms.v2.model import (
+    LightGBMDraftModel,
+    ModelNotReadyError,
+    model_files_exist,
+)
 
 from ..repositories.draft_repository import DraftRepository
 from ..schemas import (
@@ -9,21 +14,49 @@ from ..schemas import (
     ConfigDefaults,
     DraftRecommendationRequest,
     DraftRecommendationResponse,
+    DraftV2RecommendationRequest,
+    DraftV2RecommendationResponse,
     DraftWeights,
     HealthResponse,
     LeaderboardHero,
     LeaderboardMatchup,
     LeaderboardResponse,
+    ModelStatusResponse,
     RecommendationResult,
+    V2RecommendationResult,
 )
 
 
 class DraftService:
-    def __init__(self, repository: DraftRepository):
+    def __init__(self, repository: DraftRepository, v2_model_directory=None):
         self.repository = repository
+        self.v2_model_directory = v2_model_directory
+        self._v2_model = None
         self._scorer_cache = {}
         self._leaderboard_cache = {}
         self._cache_lock = Lock()
+
+    def get_v2_model_status(self):
+        if not self.v2_model_directory or not model_files_exist(
+            self.v2_model_directory
+        ):
+            return ModelStatusResponse(
+                status="missing",
+                detail="模型尚未训练或 DRAFT_V2_MODEL_PATH 配置不正确",
+            )
+
+        try:
+            model = self._get_v2_model()
+        except ModelNotReadyError as error:
+            return ModelStatusResponse(
+                status="unavailable",
+                detail=str(error),
+            )
+
+        return ModelStatusResponse(
+            status="ready",
+            model_version=model.model_version,
+        )
 
     def get_config(self):
         default_rank = (
@@ -144,6 +177,133 @@ class DraftService:
             results=response_results,
             dataset_version=self.repository.dataset_version,
         )
+
+    def recommend_v2(self, request: DraftV2RecommendationRequest):
+        rank_segment = self._validate_v2_request(request)
+        model = self._get_v2_model()
+        repository_hero_ids = {
+            hero["id"] for hero in self.repository.heroes
+        }
+
+        if set(model.schema.hero_ids) != repository_hero_ids:
+            raise ModelNotReadyError("V2 模型英雄列表与当前元数据不一致")
+
+        if rank_segment not in model.schema.rank_segments:
+            raise ModelNotReadyError(
+                f"V2 模型不支持当前分段：{rank_segment}"
+            )
+
+        picked_hero_ids = set(request.allies) | set(request.enemies)
+        excluded_hero_ids = set(request.excluded_hero_ids)
+
+        if request.position_ids:
+            candidate_ids = {
+                hero_id
+                for position_id in request.position_ids
+                for hero_id in self.repository.position_heroes[position_id]
+            }
+        else:
+            candidate_ids = repository_hero_ids
+
+        candidate_ids = sorted(
+            candidate_ids - picked_hero_ids - excluded_hero_ids
+        )
+        probabilities = model.predict_probabilities(
+            candidate_ids=candidate_ids,
+            allies=request.allies,
+            enemies=request.enemies,
+            rank_segment=rank_segment,
+            side=request.side,
+        )
+        hero_names = {
+            hero["id"]: hero["name"] for hero in self.repository.heroes
+        }
+        results = sorted(
+            (
+                V2RecommendationResult(
+                    hero_id=hero_id,
+                    hero_name=hero_names[hero_id],
+                    win_probability=probability,
+                )
+                for hero_id, probability in zip(
+                    candidate_ids,
+                    probabilities,
+                )
+            ),
+            key=lambda result: (
+                result.win_probability,
+                -result.hero_id,
+            ),
+            reverse=True,
+        )[: request.top_k]
+        return DraftV2RecommendationResponse(
+            rank=rank_segment,
+            position_ids=request.position_ids,
+            side=request.side,
+            results=results,
+            model_version=model.model_version,
+            dataset_version=model.dataset_version,
+        )
+
+    def _validate_v2_request(self, request):
+        hero_ids = {hero["id"] for hero in self.repository.heroes}
+        rank_lookup = {
+            rank.lower(): rank for rank in self.repository.rank_segments
+        }
+        normalized_rank = request.rank.strip().lower()
+
+        if normalized_rank not in rank_lookup:
+            available = ", ".join(self.repository.rank_segments)
+            raise ValueError(
+                f"未知分段：{request.rank}；可选分段：{available}"
+            )
+
+        if len(set(request.allies)) != len(request.allies):
+            raise ValueError("我方英雄 ID 不能重复")
+
+        if len(set(request.enemies)) != len(request.enemies):
+            raise ValueError("敌方英雄 ID 不能重复")
+
+        if set(request.allies) & set(request.enemies):
+            raise ValueError("同一个英雄不能同时出现在双方阵容中")
+
+        unknown_picks = (
+            set(request.allies) | set(request.enemies)
+        ) - hero_ids
+
+        if unknown_picks:
+            raise ValueError(f"未知英雄 ID：{min(unknown_picks)}")
+
+        unknown_exclusions = set(request.excluded_hero_ids) - hero_ids
+
+        if unknown_exclusions:
+            raise ValueError(
+                f"未知排除英雄 ID：{min(unknown_exclusions)}"
+            )
+
+        unknown_positions = set(request.position_ids) - set(
+            self.repository.position_heroes
+        )
+
+        if unknown_positions:
+            raise ValueError(f"未知位置 ID：{min(unknown_positions)}")
+
+        return rank_lookup[normalized_rank]
+
+    def _get_v2_model(self):
+        if self._v2_model is not None:
+            return self._v2_model
+
+        if not self.v2_model_directory:
+            raise ModelNotReadyError("Draft Score V2 模型目录未配置")
+
+        with self._cache_lock:
+            if self._v2_model is None:
+                self._v2_model = LightGBMDraftModel(
+                    self.v2_model_directory
+                )
+
+        return self._v2_model
 
     def get_leaderboard(self, rank_segment, sort_by, order):
         normalized_rank = rank_segment.strip().lower()

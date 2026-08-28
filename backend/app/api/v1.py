@@ -6,8 +6,11 @@ from ..schemas import (
     AppConfigResponse,
     DraftRecommendationRequest,
     DraftRecommendationResponse,
+    DraftV2RecommendationRequest,
+    DraftV2RecommendationResponse,
     HealthResponse,
     LeaderboardResponse,
+    ModelStatusResponse,
 )
 from ..services.draft_service import DraftService
 
@@ -30,6 +33,27 @@ async def recommend(
     service: DraftService = Depends(get_draft_service),
 ):
     return service.recommend(payload)
+
+
+@router.post(
+    "/recommend/v2",
+    response_model=DraftV2RecommendationResponse,
+)
+async def recommend_v2(
+    payload: DraftV2RecommendationRequest,
+    service: DraftService = Depends(get_draft_service),
+):
+    return service.recommend_v2(payload)
+
+
+@router.get(
+    "/models/draft-score-v2",
+    response_model=ModelStatusResponse,
+)
+async def get_v2_model_status(
+    service: DraftService = Depends(get_draft_service),
+):
+    return service.get_v2_model_status()
 
 
 @router.get("/leaderboard", response_model=LeaderboardResponse)

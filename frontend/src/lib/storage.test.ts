@@ -40,6 +40,7 @@ describe("local storage compatibility", () => {
       positionIds: [1],
       weights: { alpha: 1.2, beta: 0.4, gamma: 0.9, delta: 0.12 },
       topK: 15,
+      algorithm: "v1",
     });
   });
 
@@ -52,6 +53,18 @@ describe("local storage compatibility", () => {
     });
 
     expect(resolveDraftPreferences(config).topK).toBe(30);
+  });
+
+  it("persists the selected recommendation algorithm", () => {
+    saveDraftPreferences({
+      rank: "Legend",
+      positionIds: [],
+      weights: config.defaults.weights,
+      topK: 15,
+      algorithm: "v2",
+    });
+
+    expect(resolveDraftPreferences(config).algorithm).toBe("v2");
   });
 
   it("keeps only valid non-default proficiency values", () => {

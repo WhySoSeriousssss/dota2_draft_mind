@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 @dataclass(frozen=True)
 class Settings:
     database_path: Path
+    v2_model_directory: Path
     heroes_path: Path
     hero_positions_path: Path
     frontend_directory: Path
@@ -20,6 +21,12 @@ class Settings:
                 os.getenv(
                     "DRAFT_DATABASE_PATH",
                     PROJECT_ROOT / "data/derived/draft_score_v1.sqlite3",
+                )
+            ),
+            v2_model_directory=Path(
+                os.getenv(
+                    "DRAFT_V2_MODEL_PATH",
+                    PROJECT_ROOT / "models/draft_score_v2_lightgbm",
                 )
             ),
             heroes_path=Path(

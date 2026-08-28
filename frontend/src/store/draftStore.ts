@@ -6,7 +6,12 @@ import {
   saveDraftPreferences,
   saveProficiencies,
 } from "../lib/storage";
-import type { AppConfig, DraftWeights, Proficiency } from "../types/api";
+import type {
+  AppConfig,
+  DraftWeights,
+  Proficiency,
+  RecommendationAlgorithm,
+} from "../types/api";
 
 export type DraftSide = "ally" | "enemy";
 
@@ -20,11 +25,13 @@ interface DraftState {
   weights: DraftWeights;
   topK: number;
   proficiencies: Record<number, Proficiency>;
+  algorithm: RecommendationAlgorithm;
   hydrate: (config: AppConfig) => void;
   setRank: (rank: string) => void;
   togglePosition: (positionId: number) => void;
   setWeight: (key: keyof DraftWeights, value: number) => void;
   setTopK: (topK: number) => void;
+  setAlgorithm: (algorithm: RecommendationAlgorithm) => void;
   setActiveSide: (side: DraftSide) => void;
   addHero: (heroId: number, side?: DraftSide) => boolean;
   removeHero: (heroId: number, side: DraftSide) => void;
@@ -42,6 +49,7 @@ export const useDraftStore = create<DraftState>((set, get) => {
       positionIds: state.positionIds,
       weights: state.weights,
       topK: state.topK,
+      algorithm: state.algorithm,
     });
   };
 
@@ -55,6 +63,7 @@ export const useDraftStore = create<DraftState>((set, get) => {
     weights: defaultWeights,
     topK: 15,
     proficiencies: {},
+    algorithm: "v1",
     hydrate: (config) => {
       if (get().hydrated) return;
       const preferences = resolveDraftPreferences(config);
@@ -65,6 +74,7 @@ export const useDraftStore = create<DraftState>((set, get) => {
         positionIds: preferences.positionIds,
         weights: preferences.weights,
         topK: preferences.topK,
+        algorithm: preferences.algorithm ?? "v1",
         proficiencies: loadProficiencies(validHeroIds),
       });
     },
@@ -86,6 +96,10 @@ export const useDraftStore = create<DraftState>((set, get) => {
     },
     setTopK: (topK) => {
       set({ topK: Math.min(127, Math.max(1, Math.trunc(topK) || 15)) });
+      persistPreferences();
+    },
+    setAlgorithm: (algorithm) => {
+      set({ algorithm });
       persistPreferences();
     },
     setActiveSide: (activeSide) => set({ activeSide }),

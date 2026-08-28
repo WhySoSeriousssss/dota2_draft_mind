@@ -1,4 +1,9 @@
-import type { AppConfig, DraftWeights, Proficiency } from "../types/api";
+import type {
+  AppConfig,
+  DraftWeights,
+  Proficiency,
+  RecommendationAlgorithm,
+} from "../types/api";
 
 export const DRAFT_PREFERENCES_KEY = "dota2-draft-mind:draft-preferences:v1";
 export const PROFICIENCIES_KEY = "dota2-draft-mind:hero-proficiencies:v1";
@@ -8,6 +13,7 @@ export interface DraftPreferences {
   positionIds: number[];
   weights: DraftWeights;
   topK?: number;
+  algorithm?: RecommendationAlgorithm;
 }
 
 function readJson(key: string, storage: Storage): unknown {
@@ -51,6 +57,7 @@ export function resolveDraftPreferences(
     topK: Number.isInteger(topK) && topK >= 1 && topK <= 127
       ? topK
       : config.defaults.top_k,
+    algorithm: saved?.algorithm === "v2" ? "v2" : "v1",
   };
 }
 

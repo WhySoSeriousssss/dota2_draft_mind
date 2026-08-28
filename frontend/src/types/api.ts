@@ -1,5 +1,6 @@
 export type HeroAttribute = "str" | "agi" | "int" | "all";
 export type Proficiency = -1 | 0 | 1;
+export type RecommendationAlgorithm = "v1" | "v2";
 
 export interface Hero {
   id: number;
@@ -67,6 +68,31 @@ export interface RecommendationResponse {
   position_ids: number[];
   weights: DraftWeights;
   results: RecommendationResult[];
+  model_version: string;
+  dataset_version: string | null;
+}
+
+export interface V2RecommendationRequest {
+  rank: string;
+  allies: number[];
+  enemies: number[];
+  excluded_hero_ids: number[];
+  position_ids: number[];
+  side: "radiant" | "dire" | null;
+  top_k: number;
+}
+
+export interface V2RecommendationResult {
+  hero_id: number;
+  hero_name: string;
+  win_probability: number;
+}
+
+export interface V2RecommendationResponse {
+  rank: string;
+  position_ids: number[];
+  side: "radiant" | "dire" | null;
+  results: V2RecommendationResult[];
   model_version: string;
   dataset_version: string | null;
 }

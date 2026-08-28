@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from hero_rank_stats import (
+from .match_data import (
     RANK_SEGMENTS,
     get_rank_segment,
     iter_with_progress,

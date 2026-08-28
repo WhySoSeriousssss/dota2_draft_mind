@@ -17,9 +17,31 @@ dev = [
   "httpx>=0.27,<1",
   "pytest>=8,<9",
 ]
+pipeline = [
+  "requests>=2.32,<3",
+  "tqdm>=4.66,<5",
+]
+ml = [
+  "lightgbm>=4.5,<5",
+  "numpy>=1.26,<3",
+]
+train = [
+  "lightgbm>=4.5,<5",
+  "numpy>=1.26,<3",
+  "scikit-learn>=1.5,<2",
+  "scipy>=1.11,<2",
+]
+
+[project.scripts]
+dota-fetch-matches = "data_pipeline.ingestion.fetch_matches:main"
+dota-hero-rank-stats = "data_pipeline.processing.hero_rank_stats:main"
+dota-build-v1 = "data_pipeline.processing.build_draft_score_v1_data:main"
+dota-build-v2 = "data_pipeline.processing.build_draft_score_v2_data:main"
+dota-score-v1 = "algorithms.v1.scorer:main"
+dota-train-v2 = "algorithms.v2.train:main"
 
 [tool.setuptools.packages.find]
-include = ["backend*"]
+include = ["algorithms*", "backend*", "data_pipeline*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

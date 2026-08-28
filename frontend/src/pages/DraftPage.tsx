@@ -10,19 +10,29 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { HeroImage } from "../components/HeroImage";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { DEFAULT_API_ERROR, fetchRecommendations } from "../lib/api";
+import {
+  DEFAULT_API_ERROR,
+  ApiError,
+  fetchRecommendations,
+  fetchV2Recommendations,
+} from "../lib/api";
 import { useI18n, type TranslationKey } from "../lib/i18n";
 import { useDraftStore, type DraftSide } from "../store/draftStore";
 import type {
   AppConfig,
   Hero,
   HeroAttribute,
+  RecommendationAlgorithm,
   RecommendationRequest,
   RecommendationResult,
+  RecommendationResponse,
+  V2RecommendationRequest,
+  V2RecommendationResponse,
+  V2RecommendationResult,
 } from "../types/api";
 
 interface DraftPageProps {
@@ -31,6 +41,12 @@ interface DraftPageProps {
 
 type AttributeFilter = "all" | "all_attr" | HeroAttribute;
 type MobileView = "draft" | "results";
+type RecommendationQueryInput =
+  | { algorithm: "v1"; payload: RecommendationRequest }
+  | { algorithm: "v2"; payload: V2RecommendationRequest };
+type RecommendationQueryData =
+  | { algorithm: "v1"; response: RecommendationResponse }
+  | { algorithm: "v2"; response: V2RecommendationResponse };
 
 const attributeFilters: AttributeFilter[] = ["all", "str", "agi", "int", "all_attr"];
 
@@ -185,7 +201,9 @@ function HeroPool({ heroes, selectedIds }: HeroPoolProps) {
 }
 
 interface RecommendationsProps {
-  results: RecommendationResult[];
+  algorithm: RecommendationAlgorithm;
+  v1Results: RecommendationResult[];
+  v2Results: V2RecommendationResult[];
   heroById: Map<number, Hero>;
   rank: string;
   isFetching: boolean;
@@ -193,28 +211,44 @@ interface RecommendationsProps {
   onRefresh: () => void;
 }
 
-function Recommendations({ results, heroById, rank, isFetching, error, onRefresh }: RecommendationsProps) {
+function Recommendations({ algorithm, v1Results, v2Results, heroById, rank, isFetching, error, onRefresh }: RecommendationsProps) {
   const { heroName, numberLocale, rankName, t } = useI18n();
   const [page, setPage] = useState(1);
   const allies = useDraftStore((state) => state.allies);
   const enemies = useDraftStore((state) => state.enemies);
   const topK = useDraftStore((state) => state.topK);
   const setTopK = useDraftStore((state) => state.setTopK);
+  const setAlgorithm = useDraftStore((state) => state.setAlgorithm);
   const addHero = useDraftStore((state) => state.addHero);
-  const totalPages = Math.max(1, Math.ceil(results.length / 15));
+  const resultCount = algorithm === "v1" ? v1Results.length : v2Results.length;
+  const totalPages = Math.max(1, Math.ceil(resultCount / 15));
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * 15;
-  const pageResults = results.slice(pageStart, pageStart + 15);
+  const pageV1Results = v1Results.slice(pageStart, pageStart + 15);
+  const pageV2Results = v2Results.slice(pageStart, pageStart + 15);
+
+  useEffect(() => setPage(1), [algorithm]);
 
   return (
     <section className="recommendations-panel">
       <header className="recommendations-header">
         <div>
-          <span className="eyebrow">DRAFT SCORE V1</span>
+          <span className="eyebrow">DRAFT SCORE {algorithm.toUpperCase()}</span>
           <h1>{t("draft.recommendations")}</h1>
-          <p>{t("draft.recommendationSummary", { rank: rankName(rank), allies: allies.length, enemies: enemies.length, count: results.length })}</p>
+          <p>{t("draft.recommendationSummary", { rank: rankName(rank), allies: allies.length, enemies: enemies.length, count: resultCount })}</p>
         </div>
         <div className="recommend-actions">
+          <label className="algorithm-field">
+            <span>{t("draft.algorithm")}</span>
+            <select
+              className="control-select algorithm-select"
+              value={algorithm}
+              onChange={(event) => setAlgorithm(event.target.value as RecommendationAlgorithm)}
+            >
+              <option value="v1">{t("draft.algorithmV1")}</option>
+              <option value="v2">{t("draft.algorithmV2")}</option>
+            </select>
+          </label>
           <label><span>{t("draft.recommendationCount")}</span><input type="number" min="1" max="127" value={topK} onChange={(event) => setTopK(Number(event.target.value))} /></label>
           <button className="primary-button" type="button" onClick={onRefresh} disabled={isFetching}>
             <Calculator size={16} />{isFetching ? t("draft.calculating") : t("draft.calculate")}
@@ -224,10 +258,16 @@ function Recommendations({ results, heroById, rank, isFetching, error, onRefresh
 
       {error && <div className="inline-error">{error}</div>}
       <div className={clsx("results-table-wrap", isFetching && "updating")}>
-        <table className="results-table">
-          <thead><tr><th>#</th><th>{t("common.hero")}</th><th>Draft Score</th><th>{t("draft.baseWinRate")}</th><th>{t("draft.counterContribution")}</th><th>{t("draft.synergyContribution")}</th><th>{t("draft.proficiency")}</th><th>{t("draft.rankMatches")}</th><th /></tr></thead>
+        <table className={clsx("results-table", algorithm === "v2" && "v2-results-table")}>
+          <thead>
+            {algorithm === "v1" ? (
+              <tr><th>#</th><th>{t("common.hero")}</th><th>Draft Score</th><th>{t("draft.baseWinRate")}</th><th>{t("draft.counterContribution")}</th><th>{t("draft.synergyContribution")}</th><th>{t("draft.proficiency")}</th><th>{t("draft.rankMatches")}</th><th /></tr>
+            ) : (
+              <tr><th>#</th><th>{t("common.hero")}</th><th>{t("draft.predictedWinRate")}</th><th /></tr>
+            )}
+          </thead>
           <tbody>
-            {pageResults.map((result, index) => {
+            {algorithm === "v1" ? pageV1Results.map((result, index) => {
               const hero = heroById.get(result.hero_id);
               if (!hero) return null;
               const displayName = heroName(hero.id, hero.name);
@@ -244,10 +284,22 @@ function Recommendations({ results, heroById, rank, isFetching, error, onRefresh
                   <td><button className="table-action" type="button" onClick={() => addHero(result.hero_id, "ally")} disabled={allies.length >= 4} aria-label={t("draft.addToAllies", { hero: displayName })}><Plus size={16} /></button></td>
                 </tr>
               );
+            }) : pageV2Results.map((result, index) => {
+              const hero = heroById.get(result.hero_id);
+              if (!hero) return null;
+              const displayName = heroName(hero.id, hero.name);
+              return (
+                <tr key={result.hero_id}>
+                  <td className="result-rank">{String(pageStart + index + 1).padStart(2, "0")}</td>
+                  <td><div className="result-hero"><HeroImage src={hero.image} alt={displayName} /><span><strong>{displayName}</strong></span></div></td>
+                  <td className="score-cell">{(result.win_probability * 100).toFixed(2)}%</td>
+                  <td><button className="table-action" type="button" onClick={() => addHero(result.hero_id, "ally")} disabled={allies.length >= 4} aria-label={t("draft.addToAllies", { hero: displayName })}><Plus size={16} /></button></td>
+                </tr>
+              );
             })}
           </tbody>
         </table>
-        {!pageResults.length && !isFetching && <div className="empty-state">{t("draft.emptyRecommendations")}</div>}
+        {!resultCount && !isFetching && <div className="empty-state">{t("draft.emptyRecommendations")}</div>}
       </div>
       {totalPages > 1 && (
         <nav className="pagination" aria-label={t("draft.resultsPagination")}>
@@ -269,13 +321,14 @@ export function DraftPage({ config }: DraftPageProps) {
   const positionIds = useDraftStore((state) => state.positionIds);
   const weights = useDraftStore((state) => state.weights);
   const topK = useDraftStore((state) => state.topK);
+  const algorithm = useDraftStore((state) => state.algorithm);
   const proficiencies = useDraftStore((state) => state.proficiencies);
   const setRank = useDraftStore((state) => state.setRank);
   const togglePosition = useDraftStore((state) => state.togglePosition);
   const heroById = useMemo(() => new Map(config.heroes.map((hero) => [hero.id, hero])), [config.heroes]);
   const selectedIds = useMemo(() => new Set([...allies, ...enemies]), [allies, enemies]);
 
-  const request = useMemo<RecommendationRequest>(() => ({
+  const v1Request = useMemo<RecommendationRequest>(() => ({
     rank,
     allies,
     enemies,
@@ -285,13 +338,44 @@ export function DraftPage({ config }: DraftPageProps) {
     weights,
     top_k: topK,
   }), [allies, enemies, positionIds, proficiencies, rank, topK, weights]);
-  const debouncedRequest = useDebouncedValue(request, 180);
-  const recommendationQuery = useQuery({
+  const v2Request = useMemo<V2RecommendationRequest>(() => ({
+    rank,
+    allies,
+    enemies,
+    excluded_hero_ids: [],
+    position_ids: positionIds,
+    side: null,
+    top_k: topK,
+  }), [allies, enemies, positionIds, rank, topK]);
+  const queryInput = useMemo<RecommendationQueryInput>(() => (
+    algorithm === "v1"
+      ? { algorithm: "v1", payload: v1Request }
+      : { algorithm: "v2", payload: v2Request }
+  ), [algorithm, v1Request, v2Request]);
+  const debouncedRequest = useDebouncedValue(queryInput, 180);
+  const recommendationQuery = useQuery<RecommendationQueryData>({
     queryKey: ["recommendations", debouncedRequest],
-    queryFn: ({ signal }) => fetchRecommendations(debouncedRequest, signal),
+    queryFn: async ({ signal }) => {
+      if (debouncedRequest.algorithm === "v1") {
+        const response = await fetchRecommendations(debouncedRequest.payload, signal);
+        return { algorithm: "v1", response };
+      }
+      const response = await fetchV2Recommendations(debouncedRequest.payload, signal);
+      return { algorithm: "v2", response };
+    },
     enabled: Boolean(rank),
-    placeholderData: (previous) => previous,
+    placeholderData: (previous) => previous?.algorithm === algorithm ? previous : undefined,
   });
+  const queryData = recommendationQuery.data;
+  const recommendationError = (
+    recommendationQuery.error instanceof ApiError
+    && recommendationQuery.error.status === 404
+    && algorithm === "v2"
+  )
+    ? t("draft.v2ApiUnavailable")
+    : recommendationQuery.error?.message === DEFAULT_API_ERROR
+      ? t("common.requestFailed")
+      : recommendationQuery.error?.message;
 
   return (
     <main className="draft-page">
@@ -319,11 +403,13 @@ export function DraftPage({ config }: DraftPageProps) {
 
       <div className={clsx("draft-results", mobileView !== "results" && "mobile-hidden-results")}>
         <Recommendations
-          results={recommendationQuery.data?.results ?? []}
+          algorithm={algorithm}
+          v1Results={queryData?.algorithm === "v1" ? queryData.response.results : []}
+          v2Results={queryData?.algorithm === "v2" ? queryData.response.results : []}
           heroById={heroById}
           rank={rank}
           isFetching={recommendationQuery.isFetching}
-          error={recommendationQuery.error?.message === DEFAULT_API_ERROR ? t("common.requestFailed") : recommendationQuery.error?.message}
+          error={recommendationError}
           onRefresh={() => recommendationQuery.refetch()}
         />
       </div>

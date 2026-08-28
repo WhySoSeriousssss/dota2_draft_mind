@@ -81,7 +81,7 @@ test -f metadata/hero_positions.json
 ```bash
 sudo -u dota2 python3 -m venv /opt/dota2_draft_mind/.venv
 sudo -u dota2 /opt/dota2_draft_mind/.venv/bin/pip install --upgrade pip
-sudo -u dota2 /opt/dota2_draft_mind/.venv/bin/pip install -e ".[dev]"
+sudo -u dota2 /opt/dota2_draft_mind/.venv/bin/pip install -e ".[dev,ml]"
 ```
 
 运行后端测试：
@@ -115,6 +115,7 @@ test -d /opt/dota2_draft_mind/frontend/dist/assets
 ```bash
 sudo tee /etc/dota2-draft-mind.env >/dev/null <<'EOF'
 DRAFT_DATABASE_PATH=/opt/dota2_draft_mind/data/derived/draft_score_v1.sqlite3
+DRAFT_V2_MODEL_PATH=/opt/dota2_draft_mind/models/draft_score_v2_lightgbm
 DRAFT_HEROES_PATH=/opt/dota2_draft_mind/metadata/heroes.json
 DRAFT_HERO_POSITIONS_PATH=/opt/dota2_draft_mind/metadata/hero_positions.json
 DRAFT_FRONTEND_PATH=/opt/dota2_draft_mind/frontend/dist
@@ -289,7 +290,7 @@ cd /opt/dota2_draft_mind
 
 sudo -u dota2 git pull --ff-only
 
-sudo -u dota2 .venv/bin/pip install -e ".[dev]"
+sudo -u dota2 .venv/bin/pip install -e ".[dev,ml]"
 sudo -u dota2 .venv/bin/pytest -q
 
 cd frontend
@@ -317,7 +318,7 @@ sudo -u dota2 git switch --detach <COMMIT_ID>
 然后重新安装、构建并重启：
 
 ```bash
-sudo -u dota2 .venv/bin/pip install -e ".[dev]"
+sudo -u dota2 .venv/bin/pip install -e ".[dev,ml]"
 cd frontend
 sudo -u dota2 npm ci
 sudo -u dota2 npm run build

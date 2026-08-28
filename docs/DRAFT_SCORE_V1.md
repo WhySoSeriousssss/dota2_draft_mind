@@ -7,7 +7,7 @@
 运行：
 
 ```bash
-python3 build_draft_score_v1_data.py \
+dota-build-v1 \
   --matches-dir data/raw/ranked_matches_260802_260825 \
   --output data/derived/draft_score_v1.sqlite3
 ```
@@ -15,7 +15,7 @@ python3 build_draft_score_v1_data.py \
 如果需要覆盖已有数据库：
 
 ```bash
-python3 build_draft_score_v1_data.py \
+dota-build-v1 \
   --matches-dir data/raw/ranked_matches_260802_260825 \
   --output data/derived/draft_score_v1.sqlite3 \
   --overwrite
@@ -69,7 +69,7 @@ proficiency(candidate)
 推荐 Top 10：
 
 ```bash
-python3 draft_score_v1.py \
+dota-score-v1 \
   --data data/derived/draft_score_v1.sqlite3 \
   --rank Archon \
   --allies 1 2 \
@@ -85,7 +85,7 @@ python3 draft_score_v1.py \
 只计算一个候选英雄：
 
 ```bash
-python3 draft_score_v1.py \
+dota-score-v1 \
   --data data/derived/draft_score_v1.sqlite3 \
   --rank Archon \
   --hero-id 5 \
@@ -101,7 +101,7 @@ python3 draft_score_v1.py \
 也可以从 Python 调用：
 
 ```python
-from draft_score_v1 import DraftScoreV1
+from algorithms.v1 import DraftScoreV1
 
 scorer = DraftScoreV1(
     "data/derived/draft_score_v1.sqlite3",
