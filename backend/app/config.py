@@ -37,7 +37,7 @@ class Settings:
             frontend_directory=Path(
                 os.getenv(
                     "DRAFT_FRONTEND_PATH",
-                    PROJECT_ROOT / "frontend",
+                    PROJECT_ROOT / "frontend/dist",
                 )
             ),
         )
@@ -49,6 +49,7 @@ class Settings:
             "英雄位置配置": self.hero_positions_path,
             "前端目录": self.frontend_directory,
             "前端入口": self.frontend_directory / "index.html",
+            "前端静态资源": self.frontend_directory / "assets",
         }
 
         for label, path in required_paths.items():

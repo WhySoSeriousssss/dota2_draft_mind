@@ -48,6 +48,7 @@ python3 build_draft_score_v1_data.py \
 score = alpha * base_score
       + beta  * sum(counter(candidate, enemy))
       + gamma * sum(synergy(candidate, ally))
+      + delta * proficiency(candidate)
 ```
 
 其中：
@@ -58,6 +59,9 @@ counter(candidate, enemy)
 
 synergy(candidate, ally)
     = teammate_win_rate(candidate, ally) - base_win_rate(candidate)
+
+proficiency(candidate)
+    = -1（不会）、0（还行）、1（绝活）
 ```
 
 如果组合没有比赛数据，该组合的增量按 `0` 处理。
@@ -73,6 +77,8 @@ python3 draft_score_v1.py \
   --alpha 1 \
   --beta 1 \
   --gamma 1 \
+  --delta 0.05 \
+  --proficiency 5=1 10=-1 \
   --top-k 10
 ```
 
@@ -87,7 +93,9 @@ python3 draft_score_v1.py \
   --enemies 3 4 \
   --alpha 1 \
   --beta 1 \
-  --gamma 1
+  --gamma 1 \
+  --delta 0.05 \
+  --proficiency 5=1
 ```
 
 也可以从 Python 调用：
@@ -106,6 +114,8 @@ recommendations = scorer.recommend(
     alpha=1.0,
     beta=1.0,
     gamma=1.0,
+    delta=0.05,
+    hero_proficiencies={5: 1, 10: -1},
     top_k=10,
 )
 ```
@@ -125,5 +135,5 @@ recommendations = scorer.recommend(
 
 - 使用原始胜率，没有样本量平滑。
 - 所有历史比赛权重相同，没有时间衰减。
-- 不考虑英雄位置、先后手、版本、玩家熟练度和阵容功能完整性。
+- 不考虑先后手、版本和阵容功能完整性。
 - `score` 是排序分数，不是最终预测胜率，数值可能小于 `0` 或大于 `1`。

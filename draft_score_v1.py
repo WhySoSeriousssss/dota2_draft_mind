@@ -14,6 +14,7 @@ class ScoreResult:
     base_score: float
     counter_sum: float
     synergy_sum: float
+    proficiency_score: int
     base_appearances: int
 
 
@@ -146,6 +147,8 @@ class DraftScoreV1:
         alpha,
         beta,
         gamma,
+        delta=0.05,
+        proficiency_score=0,
     ):
         self.validate_picks(allies, enemies, candidate_id=hero_id)
         base_stat = self.base_stats.get(hero_id)
@@ -172,6 +175,7 @@ class DraftScoreV1:
             alpha * base_score
             + beta * counter_sum
             + gamma * synergy_sum
+            + delta * proficiency_score
         )
 
         return ScoreResult(
@@ -181,6 +185,7 @@ class DraftScoreV1:
             base_score=base_score,
             counter_sum=counter_sum,
             synergy_sum=synergy_sum,
+            proficiency_score=proficiency_score,
             base_appearances=base_stat["appearances"],
         )
 
@@ -193,6 +198,8 @@ class DraftScoreV1:
         gamma,
         top_k,
         candidate_hero_ids=None,
+        delta=0.05,
+        hero_proficiencies=None,
     ):
         self.validate_picks(allies, enemies)
         picked_hero_ids = set(allies) | set(enemies)
@@ -202,6 +209,7 @@ class DraftScoreV1:
             else candidate_hero_ids
         )
         results = []
+        hero_proficiencies = hero_proficiencies or {}
 
         for hero_id in candidate_hero_ids:
             if hero_id not in self.heroes:
@@ -223,6 +231,8 @@ class DraftScoreV1:
                     alpha,
                     beta,
                     gamma,
+                    delta,
+                    hero_proficiencies.get(hero_id, 0),
                 )
             )
 
@@ -237,12 +247,15 @@ class DraftScoreV1:
         return results[:top_k]
 
 
-def print_results(results, rank_segment, alpha, beta, gamma):
+def print_results(results, rank_segment, alpha, beta, gamma, delta):
     print(f"Rank: {rank_segment}")
-    print(f"Weights: alpha={alpha}, beta={beta}, gamma={gamma}")
+    print(
+        f"Weights: alpha={alpha}, beta={beta}, gamma={gamma}, delta={delta}"
+    )
     print(
         f"{'#':>3}  {'ID':>4}  {'Hero':<24}  {'Score':>9}  "
-        f"{'Base':>9}  {'Counter':>9}  {'Synergy':>9}  {'Games':>8}"
+        f"{'Base':>9}  {'Counter':>9}  {'Synergy':>9}  "
+        f"{'Prof':>5}  {'Games':>8}"
     )
 
     for index, result in enumerate(results, start=1):
@@ -253,6 +266,7 @@ def print_results(results, rank_segment, alpha, beta, gamma):
             f"{result.base_score:>9.5f}  "
             f"{result.counter_sum:>9.5f}  "
             f"{result.synergy_sum:>9.5f}  "
+            f"{result.proficiency_score:>5}  "
             f"{result.base_appearances:>8}"
         )
 
@@ -294,6 +308,14 @@ def main():
     parser.add_argument("--alpha", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=1.0)
     parser.add_argument("--gamma", type=float, default=1.0)
+    parser.add_argument("--delta", type=float, default=0.05)
+    parser.add_argument(
+        "--proficiency",
+        nargs="*",
+        default=[],
+        metavar="HERO_ID=LEVEL",
+        help="候选英雄熟练度，LEVEL 只能是 -1、0、1",
+    )
     parser.add_argument("--top-k", type=int, default=10)
     args = parser.parse_args()
 
@@ -301,6 +323,20 @@ def main():
         parser.error("--top-k 必须大于 0")
 
     scorer = DraftScoreV1(args.data, args.rank)
+    hero_proficiencies = {}
+
+    for item in args.proficiency:
+        try:
+            hero_id_text, level_text = item.split("=", 1)
+            hero_id = int(hero_id_text)
+            level = int(level_text)
+        except ValueError:
+            parser.error(f"无效 --proficiency：{item}")
+
+        if level not in {-1, 0, 1}:
+            parser.error(f"熟练度只能是 -1、0、1：{item}")
+
+        hero_proficiencies[hero_id] = level
 
     if args.hero_id is not None:
         results = [
@@ -311,6 +347,8 @@ def main():
                 args.alpha,
                 args.beta,
                 args.gamma,
+                args.delta,
+                hero_proficiencies.get(args.hero_id, 0),
             )
         ]
     else:
@@ -321,6 +359,8 @@ def main():
             args.beta,
             args.gamma,
             args.top_k,
+            delta=args.delta,
+            hero_proficiencies=hero_proficiencies,
         )
 
     print_results(
@@ -329,6 +369,7 @@ def main():
         args.alpha,
         args.beta,
         args.gamma,
+        args.delta,
     )
 
 

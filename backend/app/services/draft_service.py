@@ -63,6 +63,9 @@ class DraftService:
         available_position_ids = set(self.repository.position_heroes)
         unknown_position_ids = selected_position_ids - available_position_ids
         unknown_exclusions = excluded_hero_ids - set(scorer.heroes)
+        unknown_proficiency_heroes = (
+            set(request.hero_proficiencies) - set(scorer.heroes)
+        )
 
         if unknown_position_ids:
             unknown_text = ", ".join(
@@ -76,6 +79,13 @@ class DraftService:
                 str(hero_id) for hero_id in sorted(unknown_exclusions)
             )
             raise ValueError(f"未知排除英雄 ID：{unknown_text}")
+
+        if unknown_proficiency_heroes:
+            unknown_text = ", ".join(
+                str(hero_id)
+                for hero_id in sorted(unknown_proficiency_heroes)
+            )
+            raise ValueError(f"未知熟练度英雄 ID：{unknown_text}")
 
         candidate_hero_ids = None
 
@@ -95,6 +105,8 @@ class DraftService:
             alpha=request.weights.alpha,
             beta=request.weights.beta,
             gamma=request.weights.gamma,
+            delta=request.weights.delta,
+            hero_proficiencies=request.hero_proficiencies,
             top_k=len(scorer.heroes),
             candidate_hero_ids=candidate_hero_ids,
         )
@@ -117,6 +129,9 @@ class DraftService:
                     ),
                     "synergy_component": (
                         request.weights.gamma * result.synergy_sum
+                    ),
+                    "proficiency_component": (
+                        request.weights.delta * result.proficiency_score
                     ),
                 }
             )

@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -25,6 +27,7 @@ class DraftWeights(StrictModel):
     alpha: float = Field(default=1.0, ge=0.0, le=5.0)
     beta: float = Field(default=0.5, ge=0.0, le=5.0)
     gamma: float = Field(default=0.8, ge=0.0, le=5.0)
+    delta: float = Field(default=0.05, ge=0.0, le=0.2)
 
 
 class ConfigDefaults(StrictModel):
@@ -47,6 +50,10 @@ class DraftRecommendationRequest(StrictModel):
     enemies: list[int] = Field(default_factory=list, max_length=5)
     excluded_hero_ids: list[int] = Field(default_factory=list, max_length=127)
     position_ids: list[int] = Field(default_factory=list, max_length=4)
+    hero_proficiencies: dict[int, Literal[-1, 0, 1]] = Field(
+        default_factory=dict,
+        max_length=127,
+    )
     weights: DraftWeights = Field(default_factory=DraftWeights)
     top_k: int = Field(default=15, ge=1, le=127)
 
@@ -58,10 +65,12 @@ class RecommendationResult(StrictModel):
     base_score: float
     counter_sum: float
     synergy_sum: float
+    proficiency_score: int
     base_appearances: int
     base_component: float
     counter_component: float
     synergy_component: float
+    proficiency_component: float
 
 
 class DraftRecommendationResponse(StrictModel):

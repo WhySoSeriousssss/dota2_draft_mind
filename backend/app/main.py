@@ -27,13 +27,22 @@ def create_app(settings=None):
     app.state.draft_service = DraftService(repository)
     app.include_router(api_v1_router)
     app.mount(
-        "/static",
-        StaticFiles(directory=settings.frontend_directory / "static"),
-        name="static",
+        "/assets",
+        StaticFiles(directory=settings.frontend_directory / "assets"),
+        name="frontend-assets",
     )
 
     @app.get("/", include_in_schema=False)
     async def index():
+        return FileResponse(settings.frontend_directory / "index.html")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str):
+        if full_path.startswith("api/"):
+            return JSONResponse(
+                status_code=404,
+                content={"error": {"code": "NOT_FOUND", "message": "接口不存在"}},
+            )
         return FileResponse(settings.frontend_directory / "index.html")
 
     @app.exception_handler(ValueError)

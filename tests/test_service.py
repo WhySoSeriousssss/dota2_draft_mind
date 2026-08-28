@@ -56,6 +56,41 @@ def test_recommendation_preserves_existing_result():
         "Dazzle",
         "Grimstroke",
     ]
+    assert all(result.proficiency_component == 0 for result in response.results)
+
+
+def test_proficiency_changes_score_and_ranking():
+    request = DraftRecommendationRequest.model_validate(
+        {
+            "rank": "Legend",
+            "hero_proficiencies": {"50": 1, "52": -1},
+            "weights": {
+                "alpha": 1,
+                "beta": 0,
+                "gamma": 0,
+                "delta": 0.05,
+            },
+            "top_k": 127,
+        }
+    )
+    response = create_service().recommend(request)
+    results = {result.hero_id: result for result in response.results}
+
+    assert response.results[0].hero_id == 50
+    assert results[50].proficiency_score == 1
+    assert results[50].proficiency_component == pytest.approx(0.05)
+    assert results[52].proficiency_score == -1
+    assert results[52].proficiency_component == pytest.approx(-0.05)
+
+
+def test_unknown_proficiency_hero_is_rejected():
+    request = DraftRecommendationRequest(
+        rank="Legend",
+        hero_proficiencies={999: 1},
+    )
+
+    with pytest.raises(ValueError, match="未知熟练度英雄 ID：999"):
+        create_service().recommend(request)
 
 
 def test_excluded_heroes_are_not_recommended():
